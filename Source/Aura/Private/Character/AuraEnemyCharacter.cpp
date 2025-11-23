@@ -3,3 +3,12 @@
 
 #include "Character/AuraEnemyCharacter.h"
 
+void AAuraEnemyCharacter::HightLightEnemy()
+{
+	IsHightLight = true;
+}
+
+void AAuraEnemyCharacter::UnHightLightEnemy()
+{
+	IsHightLight = false;
+}

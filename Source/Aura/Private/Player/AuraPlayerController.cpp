@@ -5,12 +5,88 @@
 #include "InputAction.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Interaction/EnemyInterface.h"
 
 AAuraPlayerController::AAuraPlayerController()
 {
 	bReplicates = true;
 }
 
+void AAuraPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+	
+	//没帧检测是否需要高亮当前鼠标下的actor
+	CursorTrace();
+}
+void AAuraPlayerController::CursorTrace()
+{
+	//需要检测当前鼠标下的actor
+	
+	//储存这一次检测的结果
+	FHitResult CursorResults;
+	
+	// 检测鼠标光标正下方的碰撞对象，获取碰撞结果
+	// 参数1：ECC_Visibility - 碰撞通道类型为"可见性通道"（仅检测设置了"可见性"碰撞响应的对象，常用于UI交互、选中检测等场景）
+	// 参数2：false - 是否忽略复杂碰撞体（false表示不忽略，会检测复杂网格体的精确碰撞；true则只检测简化碰撞体，性能更高）
+	// 参数3：CursorResults - 输出参数（FHitResult或TArray<FHitResult>类型），用于存储碰撞检测到的结果（如命中的Actor、碰撞位置、法线等信息）
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorResults);
+	
+	if (!CursorResults.GetActor()) return;
+	
+	//当这个函数调用的时候当前thisActor中的就是上一帧的actor
+	LastActor = ThisActor;
+	ThisActor = Cast<IEnemyInterface>(CursorResults.GetActor());
+	/*
+	 * 这次的射线检测有以下几个结果
+	 *1. last和this都为空，代表玩家前后两帧鼠标下都没有任何敌方actor
+	 *		do nothing
+	 *2. last为空this不为空，代表玩家前一帧鼠标下没有actor，这一帧下出现了这个敌方actor，这个敌方actor第一次出现需要进行高亮
+	 *		do HightLiaght()
+	 *3. last不为空this为空，代表玩家前一帧鼠标下有敌方actor，这一帧下没有敌方actor，需要对上一帧下的敌方actor进行高亮取消
+	 *		do UnHightLight
+	 *4. 两个都不为空，但是last!=this，代表玩家前一帧下的敌方actor和这一帧下的敌方actor不同，需要对前一帧取消高亮，这一帧进行高亮
+	 *		last do UnHightLight this do HightLight
+	 *5.两个都不为空，但是last == this 代表玩家两帧指向的是同一个敌方actor，这个敌方actor在其他逻辑已经高亮了，这里不需要高亮
+	 *		do nothing
+	 */
+	
+	if (LastActor == nullptr)
+	{
+		if (ThisActor != LastActor)
+		{
+			//情况2
+			ThisActor->HightLightEnemy();
+		}
+		else
+		{
+			//情况1
+		}
+	}
+	else //上一帧的actor是有效的
+	{
+		if (ThisActor == nullptr)
+		{
+			//情况3
+			LastActor->UnHightLightEnemy();
+		}
+		else
+		{
+			//两者都是有效的
+			if (ThisActor != LastActor)
+			{
+				//情况4
+				LastActor->UnHightLightEnemy();
+				ThisActor->HightLightEnemy();
+			}
+			else
+			{
+				//情况5
+			}
+		}
+	}
+	
+}
 void AAuraPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -69,3 +145,5 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 		ControlledPawn->AddMovementInput(RightDirection,InputAxisVector.X);
 	}
 }
+
+
