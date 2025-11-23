@@ -18,6 +18,7 @@ public:
 	virtual void HightLightEnemy() override;
 	virtual void UnHightLightEnemy() override;
 public:
-	UPROPERTY(BlueprintReadOnly)
-	bool IsHightLight = false;
+	AAuraEnemyCharacter();
 };
+
+
