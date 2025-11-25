@@ -3,10 +3,71 @@
 
 #include "Character/AuraCharacter.h"
 
+#include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Player/AuraPlayerState.h"
+
+/**
+ * @brief 初始化玩家角色的GAS（Gameplay Ability System）核心信息
+ * 核心作用：将PlayerState中承载的能力系统组件（ASC）与角色上下文绑定，
+ * 并获取ASC和属性集（AttributeSet）的本地引用，为后续技能、属性操作提供基础
+ */
+void AAuraCharacter::InitAbilitySystemInfo()
+{
+    // 从角色获取对应的Aura自定义PlayerState（存储全局玩家状态，包含ASC和属性集）
+    // GetPlayerState<T> 是模板函数，自动类型转换，确保获取到正确的PlayerState子类
+    AAuraPlayerState* AuraPlayerState = GetPlayerState<AAuraPlayerState>();
+    // 断言检查：确保PlayerState存在（若为空则触发崩溃，提示开发者排查PlayerState创建问题）
+    check(AuraPlayerState);
+    
+    // 初始化ASC的ActorInfo：绑定ASC的所属者（Owner）和化身角色（Avatar）
+    // - 所属者（AuraPlayerState）：ASC的实际拥有者，PlayerState跨角色切换时数据不丢失
+    // - 化身角色（this，当前AuraCharacter）：ASC实际作用的角色，技能、属性效果应用于该角色
+    // 核心逻辑：玩家角色的技能系统由PlayerState承载（全局持久），但作用于当前控制的角色
+    AuraPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(AuraPlayerState, this);
+    
+    // 缓存PlayerState中的ASC到角色本地成员变量
+    // 后续角色逻辑（如技能触发、属性查询）可直接通过本地引用访问，无需重复获取PlayerState
+    AbilitySysteamComponent = AuraPlayerState->GetAbilitySystemComponent();
+    // 缓存PlayerState中的属性集（AttributeSet）到角色本地成员变量
+    // 属性集存储角色核心属性（血量、蓝量、攻击力等），本地缓存方便快速访问
+    AttributeSet = AuraPlayerState->GetAttributeSet();
+}
+
+/**
+ * @brief 服务器端：控制器（Controller）附身角色时触发的回调
+ * 触发时机：服务器上PlayerController/AIController与角色完成绑定（Possess）时
+ * 核心作用：在服务器端初始化GAS信息，确保服务器拥有权威的技能系统上下文
+ */
+void AAuraCharacter::PossessedBy(AController* NewController)
+{
+    // 调用父类实现：完成控制器绑定的基础逻辑（如设置角色的Controller指针）
+    Super::PossessedBy(NewController);
+    
+    // 服务器端初始化GAS信息
+    // 关键前提：控制器已绑定，PlayerState已同步到角色，此时初始化ASC可确保ActorInfo完整（包含Controller、PlayerState、Avatar）
+    InitAbilitySystemInfo();
+}
+
+/**
+ * @brief 客户端：PlayerState同步到本地时触发的回调
+ * 触发时机：客户端首次接收服务器同步的PlayerState，或PlayerState数据更新时
+ * 核心作用：在客户端初始化GAS信息，确保客户端拥有与服务器一致的技能系统上下文
+ */
+void AAuraCharacter::OnRep_PlayerState()
+{
+    // 调用父类实现：完成PlayerState同步的基础逻辑（如更新角色的PlayerState指针）
+    Super::OnRep_PlayerState();
+    
+    // 客户端初始化GAS信息
+    // 关键前提：PlayerState已同步到客户端，此时可获取其中的ASC和属性集，完成ActorInfo绑定
+    // 客户端初始化后，可响应服务器同步的技能效果、属性变更，播放本地视觉/音效反馈
+    InitAbilitySystemInfo();
+}
 
 AAuraCharacter::AAuraCharacter()
 {
+	
 	//启动移动方向驱动角色旋转
 	//当该属性为true时，角色的旋转会自动对齐其移动方向（比如向前移动时角色面朝前方，斜向移动时角色朝斜向转动）。
 	//常用于第三人称游戏中，让角色的朝向与移动方向保持一致，增强操作的直观性。
@@ -42,4 +103,7 @@ AAuraCharacter::AAuraCharacter()
 	// 让角色转向由移动方向自动驱动（如向前移动时角色面朝前方，斜向移动时自动转向移动方向），适用于第三人称移动逻辑
 	bUseControllerRotationYaw = false;
 	/*以上的代码核心目的是打造一个移动方向驱动转向，仅在地面平面移动，转向灵敏且姿态稳定的角色移动参数配置*/
+	
+	
 }
+
