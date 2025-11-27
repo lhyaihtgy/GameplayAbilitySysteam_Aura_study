@@ -27,7 +27,7 @@ public:
 	 * @note 该函数可在蓝图中调用，用于动态绑定UI与业务逻辑控制器
 	 * @details 1. 校验传入的控制器有效性 2. 赋值给AuraWidgetController 3. 触发WidgetControllerSet事件
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Widget Controller")
+	UFUNCTION(BlueprintCallable)
 	void SetWidgetController(UObject* InWidgetController);
 
 	/**
@@ -35,7 +35,7 @@ public:
 	 * @note 使用TObjectPtr智能指针，避免悬空指针，提升内存安全性
 	 * @category 归类到"WidgetController"，方便蓝图中查找与管理
 	 */
-	UPROPERTY(BlueprintReadOnly, Category = "WidgetController")
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UObject> AuraWidgetController;
 
 protected:
@@ -44,6 +44,6 @@ protected:
 	 * @note 1. 该函数无C++实现，需在蓝图子类中重写逻辑 2. 触发时机为SetWidgetController赋值完成后
 	 * @details 常用于UI初始化（如绑定属性回调、刷新初始数据、注册事件监听）
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Widget Controller")
+	UFUNCTION(BlueprintImplementableEvent)
 	void WidgetControllerSet();	
 };
