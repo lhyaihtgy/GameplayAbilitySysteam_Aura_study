@@ -37,7 +37,7 @@ private:
 	void CursorTrace();
 	
 	//Tick检测中上一帧，鼠标下的actor类型
-	IEnemyInterface* ThisActor;
+	TObjectPtr<IEnemyInterface> ThisActor;
 	//Tick检测中这一帧率，鼠标下的actor类型
-	IEnemyInterface* LastActor;
+	TObjectPtr<IEnemyInterface> LastActor;
 };

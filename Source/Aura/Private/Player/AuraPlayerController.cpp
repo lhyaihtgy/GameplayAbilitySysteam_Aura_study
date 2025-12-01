@@ -94,12 +94,19 @@ void AAuraPlayerController::BeginPlay()
 	
 	check(AuraContext);
 
-	UEnhancedInputLocalPlayerSubsystem* substeam = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	// 获取增强输入本地玩家子系统（该子系统是客户端LocalPlayer专属模块，服务器无LocalPlayer）
+	// LocalPlayer仅存在于客户端，服务器完全没有，因此服务器调用GetSubsystem会返回空
+	UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 	
-	//通过增加玩家输入子系统来映射上下文，由此让玩家控制器获得数据
-	check(substeam);
-	substeam->AddMappingContext(AuraContext,0);
-	
+	// 判空原因（核心适配多人游戏+客户端异常场景）：
+	// 1. 服务器执行此代码时：无LocalPlayer → subsystem为空，直接调用AddMappingContext会导致服务器崩溃（联机房间掉线）；
+	// 2. 客户端场景：PlayerController的BeginPlay可能早于LocalPlayer初始化，或Enhanced Input插件未启用 → subsystem为空；
+	// 3. 避免空指针调用AddMappingContext导致客户端闪退（尤其主机/移动端更敏感）
+	if (subsystem)
+	{
+		// 为本地玩家添加输入映射上下文，让玩家控制器获得输入绑定数据（仅客户端有效）
+		subsystem->AddMappingContext(AuraContext, 0);
+	}
 	
 	bShowMouseCursor = true;//设定显示鼠标
 	DefaultMouseCursor = EMouseCursor::Default;//鼠标样式为默认

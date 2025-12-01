@@ -5,6 +5,6 @@
 
 void UAuraUserWidget::SetWidgetController(UObject* InWidgetController)
 {
-	AuraWidgetController = InWidgetController;
+	WidgetController = InWidgetController;
 	WidgetControllerSet();
 }

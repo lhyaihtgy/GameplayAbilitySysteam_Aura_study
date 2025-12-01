@@ -36,7 +36,7 @@ public:
 	 * @category 归类到"WidgetController"，方便蓝图中查找与管理
 	 */
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UObject> AuraWidgetController;
+	TObjectPtr<UObject> WidgetController;
 
 protected:
 	/**

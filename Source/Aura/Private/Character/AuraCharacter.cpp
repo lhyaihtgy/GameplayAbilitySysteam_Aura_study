@@ -5,7 +5,11 @@
 
 #include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Player/AuraPlayerController.h"
 #include "Player/AuraPlayerState.h"
+#include "UI/HUD/AuraHUD.h"
+#include "UI/WidgetController/AuraWidgetController.h"
+#include "UI/WidgetController/OverlayWidgetController.h"
 
 /**
  * @brief 初始化玩家角色的GAS（Gameplay Ability System）核心信息
@@ -32,6 +36,21 @@ void AAuraCharacter::InitAbilitySystemInfo()
     // 缓存PlayerState中的属性集（AttributeSet）到角色本地成员变量
     // 属性集存储角色核心属性（血量、蓝量、攻击力等），本地缓存方便快速访问
     AttributeSet = AuraPlayerState->GetAttributeSet();
+	
+	// 判空玩家控制器（适配多人游戏架构核心逻辑）：
+	// 多人游戏中服务器持有所有玩家的PlayerController，而客户端仅持有自身的PlayerController；
+	// 若不判空，当客户端代码尝试获取其他玩家的PlayerController时会返回空指针，
+	// 直接调用后续GetHUD()/InitOverlay()会导致客户端崩溃，此判断规避该场景的致命错误
+	if (AAuraPlayerController* AuraPlayerController = GetController<AAuraPlayerController>())
+	{
+		AAuraHUD* AuraHUD = Cast<AAuraHUD>(AuraPlayerController->GetHUD());
+
+		//当函数执行到这里的时候可以确定HUD需要的元素都已经初始化完毕了
+		AuraHUD->InitOverlay(AuraPlayerController,AuraPlayerState,AbilitySysteamComponent,AttributeSet);
+	}
+	
+	
+	
 }
 
 /**
@@ -103,7 +122,6 @@ AAuraCharacter::AAuraCharacter()
 	// 让角色转向由移动方向自动驱动（如向前移动时角色面朝前方，斜向移动时自动转向移动方向），适用于第三人称移动逻辑
 	bUseControllerRotationYaw = false;
 	/*以上的代码核心目的是打造一个移动方向驱动转向，仅在地面平面移动，转向灵敏且姿态稳定的角色移动参数配置*/
-	
 	
 }
 

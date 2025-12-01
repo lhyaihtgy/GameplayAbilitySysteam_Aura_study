@@ -52,7 +52,8 @@ void AAuraEffectActor::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		//去除AuraAttributeSet的const属性，工作中绝对不能做，这里只是为了学习，
 		UAuraAttributeSet* MutableAuraAttributeset = const_cast<UAuraAttributeSet*>(AuraAttributeSet);
 		
-		MutableAuraAttributeset->SetHealth(MutableAuraAttributeset->GetMaxHealth()+25.0f);
+		MutableAuraAttributeset->SetHealth(MutableAuraAttributeset->GetHealth()+25.0f);
+		MutableAuraAttributeset->SetMana(MutableAuraAttributeset->GetMana()-25.0f);
 		Destroy();
 	}
 }

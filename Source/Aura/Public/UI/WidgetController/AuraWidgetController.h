@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "AuraWidgetController.generated.h"
 
+class UAuraAttributeSet;
 class UAttributeSet;
 class UAbilitySystemComponent;
 /**
@@ -23,12 +23,40 @@ class UAbilitySystemComponent;
  * @note 每个UI组件可绑定独立的Controller实例，也可共享全局Controller（如玩家状态控制器）
  * @warning 需在UI初始化前完成Controller的初始化（绑定PlayerController/AttributeSet等核心数据），否则UI会获取空数据
  */
+USTRUCT(BlueprintType)
+struct FWidgetControllerParams
+{
+	GENERATED_BODY()
+	
+	FWidgetControllerParams(){}
+	FWidgetControllerParams(APlayerController* PC,APlayerState* PS,UAbilitySystemComponent* USC,UAttributeSet* AS)
+		:PlayerController(PC),PlayerState(PS),AbilitySystemComponent(USC),AttributSet(AS)
+	{}
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<APlayerController> PlayerController = nullptr;
+	
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<APlayerState> PlayerState = nullptr;
+	
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+	
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<UAttributeSet> AttributSet = nullptr;	
+};
+
 UCLASS()
 class AURA_API UAuraWidgetController : public UObject
 {
 	// UE反射系统必备宏，自动生成类的反射元数据、构造/析构等核心逻辑
 	GENERATED_BODY()
-
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetWidgetControllerParams(const FWidgetControllerParams& params);
+	
+	virtual void BroadcastInitialValues();
+	
+	virtual void BindCallbacksToDependencies();
 protected:
 	/**
 	 * @brief 关联的玩家控制器（客户端视角的玩家核心控制类）
@@ -52,7 +80,7 @@ protected:
 	 * @see UAbilitySystemComponent
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="WidgetController|GAS")
-	TObjectPtr<UAbilitySystemComponent> SystemComponent;
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
 	/**
 	 * @brief 关联的属性集（存储玩家核心属性：生命值、法力值、攻击力等）
@@ -60,5 +88,5 @@ protected:
 	 * @see UAttributeSet
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="WidgetController|GAS")
-	TObjectPtr<UAttributeSet> Attributes;
+	TObjectPtr<UAttributeSet> AttributeSet;
 };

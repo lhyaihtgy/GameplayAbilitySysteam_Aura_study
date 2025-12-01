@@ -6,6 +6,7 @@
 #include "Character/AuraCharacterBase.h"
 #include "AuraCharacter.generated.h"
 
+class AAuraHUD;
 /**
  * 
  */
@@ -18,6 +19,9 @@ public:
 	virtual  void OnRep_PlayerState() override;
 public:
 	AAuraCharacter();
+	
+	
 private:
 	void InitAbilitySystemInfo();
+	
 };
