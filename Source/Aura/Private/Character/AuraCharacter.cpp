@@ -41,12 +41,15 @@ void AAuraCharacter::InitAbilitySystemInfo()
 	// 多人游戏中服务器持有所有玩家的PlayerController，而客户端仅持有自身的PlayerController；
 	// 若不判空，当客户端代码尝试获取其他玩家的PlayerController时会返回空指针，
 	// 直接调用后续GetHUD()/InitOverlay()会导致客户端崩溃，此判断规避该场景的致命错误
-	if (AAuraPlayerController* AuraPlayerController = GetController<AAuraPlayerController>())
+	//if (AAuraPlayerController* AuraPlayerController = GetController<AAuraPlayerController>())//错误代码
+	if (AAuraPlayerController*AuraPlayerController = Cast<AAuraPlayerController>(GetController()))
 	{
-		AAuraHUD* AuraHUD = Cast<AAuraHUD>(AuraPlayerController->GetHUD());
-
-		//当函数执行到这里的时候可以确定HUD需要的元素都已经初始化完毕了
-		AuraHUD->InitOverlay(AuraPlayerController,AuraPlayerState,AbilitySysteamComponent,AttributeSet);
+		if (AAuraHUD* AuraHUD = Cast<AAuraHUD>(AuraPlayerController->GetHUD()))
+		{
+			//只有本地的玩家才具有AuraHUD服务器是不需要HUD的
+			//当函数执行到这里的时候可以确定HUD需要的元素都已经初始化完毕了
+			AuraHUD->InitOverlay(AuraPlayerController,AuraPlayerState,AbilitySysteamComponent,AttributeSet);	
+		}
 	}
 	
 	

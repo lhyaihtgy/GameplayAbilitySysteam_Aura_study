@@ -50,6 +50,8 @@ void AAuraHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySyst
 	// 强制检查：OverlayWidgetController（UI逻辑控制器模板）未配置时，触发断言并提示
 	// 需在BP_AuraHUD的细节面板中选择对应的WidgetController蓝图
 	checkf(OverlayWidgetControllerClass,TEXT("Overlay WidgetController Class uninitialized,Please fill out BP_AuraHUD"));
+	
+
 
 	// 根据UI蓝图模板创建Overlay UI实例（先创建父类UUserWidget，后续强转为自定义子类）
 	UUserWidget*Widget = CreateWidget<UUserWidget>(GetWorld(),OverlayWidgetClass);

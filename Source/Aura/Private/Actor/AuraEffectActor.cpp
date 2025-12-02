@@ -3,9 +3,11 @@
 
 #include "Actor/AuraEffectActor.h"
 
-#include "AbilitySystemInterface.h"
+
 #include "AbilitySystem/AuraAttributeSet.h"
-#include "Components/SphereComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayEffect.h"
+
 
 /**
  * @brief 构造函数：初始化Actor的核心组件与基础配置
@@ -17,73 +19,70 @@ AAuraEffectActor::AAuraEffectActor()
  	// 禁用Actor的Tick更新（该Actor仅响应碰撞事件，无需帧更新，节省性能）
 	PrimaryActorTick.bCanEverTick = false;
 	
-	// 创建静态网格组件（用于显示特效Actor的视觉模型），命名为"StaticMesh"
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
-	// 将Mesh设为根组件，作为Actor的空间定位基准
-	SetRootComponent(Mesh);
-	//将静态的mesh作为根
+	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
 	
-	// 创建球形碰撞组件（用于检测范围重叠），命名为"Sphere"
-	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
-	// 将Sphere组件附着到根组件（Mesh）上，继承根组件的Transform（位置/旋转/缩放）
-	Sphere->SetupAttachment(GetRootComponent());
 }
 
-/**
- * @brief 碰撞重叠触发的回调函数
- * @param OverlappedComponent 发生重叠的当前Actor的Primitive组件（本示例中为Sphere碰撞体）
- * @param OtherActor 与当前Actor发生重叠的其他Actor（如玩家角色、敌人等）
- * @param OtherComp 其他Actor上参与重叠的Primitive组件
- * @param OtherBody 其他Actor的碰撞体索引（多碰撞体时区分具体碰撞部位）
- * @param bFromSweep 是否由Sweep扫描（如移动检测）触发的重叠，而非静态重叠
- * @param SweepResult 扫描触发重叠时的碰撞结果（包含位置、法线等信息）
- * @note 该函数需绑定到碰撞组件的OnComponentBeginOverlap委托才会触发
- */
-//DOTO:之后要通过Game Effect来改变属性集中的属性，这里的去除cost是不和法的
-void AAuraEffectActor::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBody, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(OtherActor))
-	{
-		//从我重写的接口中得到能力系统组件再去获得属性set，最后返回的是const的属性set，因为一般只有属性set自己来设置自己的属性值，而不能向下面这样通过cost_cast去除const属性之后再去修改值
-		//这是不合法的
-		const UAuraAttributeSet* AuraAttributeSet = Cast<UAuraAttributeSet>(ASCInterface->GetAbilitySystemComponent()->GetAttributeSet(UAuraAttributeSet::StaticClass()));
-		
-		//去除AuraAttributeSet的const属性，工作中绝对不能做，这里只是为了学习，
-		UAuraAttributeSet* MutableAuraAttributeset = const_cast<UAuraAttributeSet*>(AuraAttributeSet);
-		
-		MutableAuraAttributeset->SetHealth(MutableAuraAttributeset->GetHealth()+25.0f);
-		MutableAuraAttributeset->SetMana(MutableAuraAttributeset->GetMana()-25.0f);
-		Destroy();
-	}
-}
 
-/**
- * @brief 碰撞重叠结束触发的回调函数
- * @param OverlappedComponent 结束重叠的当前Actor的Primitive组件（本示例中为Sphere碰撞体）
- * @param OtherActor 与当前Actor结束重叠的其他Actor
- * @param OtherComp 其他Actor上参与重叠的Primitive组件
- * @param OtherBodyIndex 其他Actor的碰撞体索引（多碰撞体时区分具体碰撞部位）
- * @note 该函数需绑定到碰撞组件的OnComponentEndOverlap委托才会触发
- */
-void AAuraEffectActor::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-}
+
+
 
 /**
  * @brief Actor初始化完成后的核心入口函数
  * @note 执行时机：Actor被生成且所有组件初始化完成后触发，晚于构造函数
- * 核心逻辑：初始化碰撞重叠的委托绑定，确保Sphere碰撞体检测到重叠时能触发OnOverlap回调
  */
 void AAuraEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
-	// 绑定碰撞开始重叠委托：当Sphere组件检测到其他对象进入范围时，触发OnOverlap函数
-	// AddDynamic：UE特有的动态委托绑定宏，关联"委托源(Sphere的重叠事件)"与"回调函数(OnOverlap)"
-	Sphere->OnComponentBeginOverlap.AddDynamic(this,&AAuraEffectActor::OnOverlap);
-	// 绑定碰撞结束重叠委托：当Sphere组件检测到其他对象离开范围时，触发EndOverlap函数
-	Sphere->OnComponentEndOverlap.AddDynamic(this,&AAuraEffectActor::EndOverlap);
+}
+
+/**
+ * 给目标Actor应用指定的GameplayEffect（游戏效果）
+ * @param Target 要施加游戏效果的目标Actor（如玩家角色、敌人）
+ * @param GamePlayEffectClass 要应用的游戏效果类模板（需继承自UGameplayEffect，如血量加成、减速效果蓝图类）
+ * 核心逻辑：通过GAS框架给目标的ASC（能力系统组件）施加效果，依赖句柄管理GAS核心对象的生命周期与安全访问
+ */
+void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GamePlayEffectClass)
+{
+	/********************************************************************
+	【备选获取ASC的方式】通过接口判断Actor是否包含能力系统组件：
+	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(Target);
+	if (ASCInterface == nullptr)
+		return;
+	UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
+	说明：并非所有Actor都挂载ASC，需通过接口/蓝图库函数判断，避免空指针
+	********************************************************************/
+	
+	// 1. 通过GAS蓝图库获取目标Actor的AbilitySystemComponent（ASC）——GAS核心组件，所有效果/技能都通过它管理
+	// ASC是连接Actor和GAS框架的桥梁，只有获取到有效ASC，才能施加游戏效果
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+	// 判空：若目标无ASC（如场景静态Actor），直接返回，避免后续非法访问
+	if (TargetASC == nullptr) return;
+	
+	// 2. 强制检查：确保传入的游戏效果类模板非空（若为空，后续创建效果规格会崩溃）
+	// check断言在Debug模式下触发，提示开发者配置效果类，Release模式下等价于空检查
+	check(GamePlayEffectClass);
+	
+	// 3. 创建游戏效果上下文句柄（FGameplayEffectContextHandle）
+	// 【句柄核心作用】：
+	// - 管理FGameplayEffectContext（游戏效果上下文）的生命周期，避免悬空指针；
+	// - 存储效果的元数据（发起者、目标、触发场景、效果归因等），是GAS效果的“上下文标签”；
+	// - 句柄是UE对UObject/结构体的安全封装，自动处理内存释放，比直接操作上下文对象更安全
+	FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
+	
+	// 4. 给上下文设置“源对象”（当前EffectActor）——标记效果的发起者，便于后续追溯效果来源（如哪个机关触发了加血）
+	EffectContextHandle.AddSourceObject(this);
+	
+	// 5. 创建游戏效果规格句柄（FGameplayEffectSpecHandle）
+	// 【句柄核心作用】：
+	// - 管理FGameplayEffectSpec（游戏效果规格）的生命周期，安全访问规格对象；
+	// - 存储效果的核心配置：效果类、效果等级（1.f）、上下文（EffectContextHandle）；
+	// - 是“效果施加”的核心载体，后续可通过该句柄设置效果参数（如血量加成值、减速百分比）
+	FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GamePlayEffectClass,1.f,EffectContextHandle);
+	
+	// 6. 将效果规格应用到目标自身（ApplyGameplayEffectSpecToSelf）
+	// EffectSpecHandle.Data.Get()：通过句柄获取底层的效果规格对象（需确保句柄有效，此处因前面判空+check，可安全访问）
+	TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 }
 
 
