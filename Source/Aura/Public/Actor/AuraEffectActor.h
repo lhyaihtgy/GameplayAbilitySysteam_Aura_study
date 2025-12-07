@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "GameFramework/Actor.h"
 #include "AuraEffectActor.generated.h"
 
 
-
+class UAbilitySystemComponent;
 class UGameplayEffect;
 
 UENUM(BlueprintType)
@@ -74,5 +75,10 @@ protected:
 	EffectApplycationPolicy InfiniteEffectApplycationPolicy = EffectApplycationPolicy::DoNotApply;
 	//无限效果的移除策略，只有无限效果才有
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
-	EffectRemovePolicy InfinitEffectRemovePolicy = EffectRemovePolicy::RemoveOnEndOverlap;
+	EffectRemovePolicy InfiniteEffectRemovePolicy = EffectRemovePolicy::RemoveOnEndOverlap;
+	
+	TMap<FActiveGameplayEffectHandle,UAbilitySystemComponent*> ActiveEffectHandles;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+	float ActorLevel = 1.f;
 };

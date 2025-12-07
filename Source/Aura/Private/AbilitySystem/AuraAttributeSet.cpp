@@ -2,13 +2,17 @@
 
 
 #include "AbilitySystem/AuraAttributeSet.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayEffectExtension.h"
+#include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
     //这个函数就是通过ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Health);宏生成的
-    InitHealth(50.0f);
-    InitMana(10.0f);
+    InitHealth(5.0f);
+    InitMana(5.0f);
     InitMaxMana(50.0f);
     InitMaxHealth(100.0f);
 }
@@ -41,6 +45,120 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana,COND_None, REPNOTIFY_Always);
 }
+
+/**
+ * @brief 属性修改前的数值校验函数（GAS核心回调）
+ * @note 执行时机：任何GAS效果/代码修改属性数值前触发（服务端+客户端）
+ * @param Attribute 即将被修改的目标属性（如Health、Mana）
+ * @param NewValue 待设置的属性新值（按引用传递，可直接修改限制范围）
+ * 核心逻辑：
+ * 1. 限制生命值（Health）范围：0 ≤ 生命值 ≤ 最大生命值（MaxHealth）；
+ * 2. 限制魔力值（Mana）范围：0 ≤ 魔力值 ≤ 最大魔力值（MaxMana）；
+ * 作用：避免属性出现非法数值（如负数生命值、超过上限的魔力值）
+ */
+void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+    // 调用父类的PreAttributeChange，确保GAS默认逻辑正常执行
+    Super::PreAttributeChange(Attribute, NewValue);
+    
+    // 校验并限制生命值范围：不能小于0，也不能超过当前最大生命值
+    if (Attribute == GetHealthAttribute())
+    {
+        NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
+    }
+    // 校验并限制魔力值范围：不能小于0，也不能超过当前最大魔力值
+    if (Attribute == GetManaAttribute())
+    {
+        NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMana());
+    }
+}
+
+/**
+ * @brief 解析GAS效果的源/目标属性并封装到FEffectProperties结构体
+ * @note 核心工具函数：统一提取效果相关的核心对象，避免重复代码，提升可读性
+ * @param Data GAS效果修改回调数据（包含效果规格、源/目标ASC等核心信息）
+ * @param Props 输出参数：封装后的效果属性结构体（源/目标的ASC、Actor、Controller、Character等）
+ * 关键定义：
+ * - Source：触发效果的发起方（如释放技能的玩家）；
+ * - Target：效果作用的目标方（当前AttributeSet的拥有者，如被攻击的敌人）；
+ * 核心逻辑：
+ * 1. 从效果上下文提取源端（Source）的ASC、Actor、Controller、Character；
+ * 2. 从回调数据提取目标端（Target）的ASC、Actor、Controller、Character；
+ * 3. 处理边界情况（如SourceController为空时，从Pawn补全）；
+ */
+void UAuraAttributeSet::SetFEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const
+{
+    // 1. 从效果规格中获取效果上下文句柄（记录效果的发起者、来源等元数据）
+    Props.EffectContextHandle = Data.EffectSpec.GetContext();
+    
+    // 2. 获取源端（Source）的AbilitySystemComponent（ASC）——效果发起方的核心GAS组件
+    Props.SourceASC = Props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+    
+    // 3. 解析源端（Source）的核心对象（ASC→AvatarActor→Controller→Character）
+    if (IsValid(Props.SourceASC) && Props.SourceASC->AbilityActorInfo.IsValid() && Props.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+    {
+        // 源端的AvatarActor（通常是发起效果的角色Actor，如玩家角色、敌人AI）
+        Props.SourceAvatarActor = Props.SourceASC->AbilityActorInfo->AvatarActor.Get();
+        // 源端的PlayerController（若存在，如玩家操控的角色；AI角色可能为空）
+        Props.SourceController = Props.SourceASC->AbilityActorInfo->PlayerController.Get();
+        
+        // 边界处理：若SourceController为空（如AI角色），从SourceAvatarActor（Pawn）补全Controller
+        if (Props.SourceController == nullptr && Props.SourceAvatarActor != nullptr)
+        {
+            if (const APawn* Pawn = Cast<APawn>(Props.SourceAvatarActor))
+            {
+                Props.SourceController = Pawn->GetController();
+            }
+        }
+        
+        // 源端的Character（若SourceAvatarActor是Character类型，如玩家/敌人角色）
+        if (Props.SourceController)
+        {
+           Props.SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
+        }
+    }
+    
+    // 4. 解析目标端（Target）的核心对象（当前AttributeSet的拥有者）
+    if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+    {
+        // 目标端的AvatarActor（效果作用的角色Actor，如被加血/扣血的角色）
+        Props.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+        // 目标端的PlayerController（若存在）
+        Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+        // 目标端的Character（若TargetAvatarActor是Character类型）
+        Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
+        // 目标端的ASC（通过蓝图库获取，确保与TargetAvatarActor绑定）
+        Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
+    }
+}
+
+/**
+ * @brief GAS效果执行后的回调函数（属性修改完成后触发）
+ * @note 执行时机：任何GAS效果修改当前AttributeSet的属性后立即触发（如加血、扣蓝、加攻击后）
+ * @param Data GAS效果修改回调数据（包含效果规格、源/目标信息、属性修改记录等）
+ * 核心逻辑：
+ * 1. 初始化效果属性结构体Props；
+ * 2. 调用SetFEffectProperties解析源/目标的核心对象；
+ * 3. 为后续业务逻辑（如血条UI刷新、受伤特效、死亡判断）提供基础数据；
+ * 关键注意点：
+ * - 效果发起方（Source）可能不包含Controller（如环境陷阱触发的效果）；
+ * - Props中的属性可能部分无效（如SourceCharacter为空），使用前需通过IsValid()校验；
+ */
+void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+    // 调用父类的PostGameplayEffectExecute，确保GAS默认逻辑正常执行
+    Super::PostGameplayEffectExecute(Data);
+    
+    // 初始化效果属性结构体，用于封装源/目标的核心信息
+    FEffectProperties Props;
+    // 解析效果的源/目标属性到Props中（核心：为后续逻辑提供数据支撑）
+    SetFEffectProperties(Data, Props);
+    
+    // 【重要提示】：
+    // 效果的产生场景不同，Props中的属性可能不全有效（如环境效果无SourceController）；
+    // 后续使用Props中的属性（如SourceCharacter、TargetASC）时，必须通过IsValid()校验有效性，避免空指针崩溃。
+}
+
 
 /**
  * @brief 生命值（Health）网络同步回调函数
@@ -80,3 +198,5 @@ void UAuraAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) 
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, MaxMana, OldMaxMana);
 }
+
+
