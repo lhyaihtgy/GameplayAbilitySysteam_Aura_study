@@ -72,9 +72,15 @@ void AAuraEnemyCharacter::UnHightLightEnemy()
 void AAuraEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();	
+	InitAbilitySystemInfo();
+}
+
+void AAuraEnemyCharacter::InitAbilitySystemInfo()
+{
 	if (AbilitySysteamComponent)
 	{
 		//初始化能力组件的拥有者和生效者都是该对象自身
 		AbilitySysteamComponent->InitAbilityActorInfo(this,this);
 	}
+	Cast<UAuraAbilitySystemComponent>(AbilitySysteamComponent)->AbilityActorInfoSet();
 }

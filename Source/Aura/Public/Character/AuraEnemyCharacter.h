@@ -21,6 +21,7 @@ public:
 	/** end enemy interface **/
 protected:
 	virtual void BeginPlay() override;
+	virtual void InitAbilitySystemInfo() override;
 public:
 	AAuraEnemyCharacter();
 };

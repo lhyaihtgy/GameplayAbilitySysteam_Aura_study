@@ -4,6 +4,7 @@
 #include "Character/AuraCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/AuraPlayerController.h"
 #include "Player/AuraPlayerState.h"
@@ -30,6 +31,7 @@ void AAuraCharacter::InitAbilitySystemInfo()
     // 核心逻辑：玩家角色的技能系统由PlayerState承载（全局持久），但作用于当前控制的角色
     AuraPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(AuraPlayerState, this);
     
+	Cast<UAuraAbilitySystemComponent>(AuraPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
     // 缓存PlayerState中的ASC到角色本地成员变量
     // 后续角色逻辑（如技能触发、属性查询）可直接通过本地引用访问，无需重复获取PlayerState
     AbilitySysteamComponent = AuraPlayerState->GetAbilitySystemComponent();

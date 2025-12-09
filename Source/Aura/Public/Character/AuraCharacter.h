@@ -22,6 +22,5 @@ public:
 	
 	
 private:
-	void InitAbilitySystemInfo();
-	
+	virtual void InitAbilitySystemInfo() override;
 };

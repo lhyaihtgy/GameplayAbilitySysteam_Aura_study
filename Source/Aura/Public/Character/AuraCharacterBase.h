@@ -34,4 +34,6 @@ protected:
 	//敌人的属性集组件
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+	
+	virtual void InitAbilitySystemInfo();
 };
