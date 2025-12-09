@@ -3,6 +3,8 @@
 
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 
+#include "GameplayTagsManager.h"
+
 /**
  * @brief 当AbilityActorInfo被设置完成后调用的回调函数
  * @note AbilityActorInfo包含了能力系统组件所属的Actor、Controller等关键信息，
@@ -27,10 +29,8 @@ void UAuraAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* Ability
 {
 	FGameplayTagContainer TagContainer;
 	EffectSpec.GetAllAssetTags(TagContainer);
-	for (FGameplayTag Tag: TagContainer)
-	{
-		//DOTO将标签广播到widget Controller
-		const FString Msg = FString::Printf(TEXT("GE Tag is:%s"),*Tag.ToString());
-		GEngine->AddOnScreenDebugMessage(-1,8.f,FColor::Green,Msg);
-	}
+	
+	//对widget Controller进行广播，广播的时候会给对应的响应函数传入一个Assert Tag
+	EffectAssertTags.Broadcast(TagContainer);
+	
 }

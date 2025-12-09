@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UI/WidgetController/AuraWidgetController.h"
 #include "OverlayWidgetController.generated.h"
 
+class UAuraUserWidget;
 struct FOnAttributeChangeData;
 // 声明「血量变化」的动态多播委托（带1个浮点型参数）
 // 动态多播委托：支持C++和蓝图双向绑定/触发，可同时绑定多个回调函数
@@ -20,6 +22,29 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature,float,N
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature,float,NewMana);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature,float,NewMaxMana);
+
+USTRUCT(BlueprintType)
+struct FUIWidgetRow:public FTableRowBase
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag MesssageTag = FGameplayTag();
+	
+	
+	//向小组件中传递的信息
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Messsage = FText();
+	
+	//对于任意的游戏玩法标签，这里传入一个小部件，让在接受到这个标签
+	//对应的效果时，能够将其显示到玩家UI上
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UAuraUserWidget> MessageWidget;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UTexture2D* Image = nullptr;
+};
+
 
 /**
  * Overlay UI（血条/蓝条面板）的逻辑控制器
@@ -62,6 +87,12 @@ public:
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Attributes")
 	FOnMaxManaChangedSignature OnMaxManaChanged;
 protected:
+	
+	
+	//这个容器表中储存着一些信息，当gameEffect启效果的时候，会传入一个标签容器，查找这个容器内部的标签是否在这个表中存在，存在就将这个标签内部挂在的内容广播给小组件
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Weiget Data")
+	TObjectPtr<UDataTable> MessageWidgetDataTable;
+	
 	//以下两个函数是当生命值和最大生命值改变的时候会被调用的函数
 	void HealthChanged(const FOnAttributeChangeData& Data) const;
 	void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
@@ -69,4 +100,15 @@ protected:
 	//以下两个函数时当魔力值和最大魔力值发生变化的时候会被调用的函数
 	void ManaChanged(const FOnAttributeChangeData& Data) const;
 	void MaxManaChanged(const FOnAttributeChangeData& Data) const;
+	
+	
+	//这个模板函数之后会写入静态函数库中作用是接受任意类型的数据表并从中找到Tag对应的那一行
+	template<typename T>
+	T* GetDataTableRowByTag(UDataTable* DataTable,const FGameplayTag& Tag);
 };
+
+template <typename T>
+T* UOverlayWidgetController::GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag)
+{
+	return DataTable->FindRow<T>(Tag.GetTagName(),TEXT(""));
+}

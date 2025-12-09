@@ -4,6 +4,7 @@
 #include "UI/WidgetController/OverlayWidgetController.h"
 
 #include "AttributeSet.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 
 
@@ -55,6 +56,22 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	//和上面一致
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetManaAttribute()
 		).AddUObject(this,&UOverlayWidgetController::ManaChanged);
+	
+	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssertTags.AddLambda(
+		[this](const FGameplayTagContainer& AssertTags)	
+		{
+			for (FGameplayTag Tag: AssertTags)
+			{
+				//DOTO将标签广播到widget Controller
+				const FString Msg = FString::Printf(TEXT("test Tag is:%s"),*Tag.ToString());
+				GEngine->AddOnScreenDebugMessage(-1,8.f,FColor::Green,Msg);
+				
+				//在数据表中找到这个Tag对应的这一行
+				FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable,Tag);
+				//将这一行广播给小组件
+			}
+		}
+		);
 }
 
 /**
