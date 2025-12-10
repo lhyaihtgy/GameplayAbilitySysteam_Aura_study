@@ -57,18 +57,38 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetManaAttribute()
 		).AddUObject(this,&UOverlayWidgetController::ManaChanged);
 	
+	
+	
+	//函数介绍
+	/**
+ * @brief 判断当前Gameplay标签是否与目标标签匹配（支持层级标签的包含性匹配）
+ * 
+ * @param MessageTag 待比较的目标FGameplayTag（要检查当前标签是否与该标签匹配）
+ * @return bool 匹配结果：true表示当前标签与目标标签匹配；false表示不匹配
+ * 
+ * @note 匹配规则基于Gameplay标签的层级结构（用"."分隔的父子关系）：
+ *       1. 精确匹配：当前标签与目标标签完全相同（如"Ability.Attack" == "Ability.Attack"）；
+ *       2. 父标签匹配：当前标签是目标标签的"父标签"（如"Ability" 匹配 "Ability.Attack"，因为"Ability"是"Ability.Attack"的顶层父标签）；
+ *       3. 子标签不匹配：当前标签是目标标签的"子标签"时不匹配（如"Ability.Attack" 不匹配 "Ability"，子标签无法匹配父标签）。
+ * @see FGameplayTag的层级结构：标签通过"."分隔表示父子关系（如"Root.Parent.Child"中，Root是Parent的父标签，Parent是Child的父标签）
+ * @usage 常用于判断技能/状态标签是否符合条件（如检查某个技能标签是否属于"Ability.Attack"类型，或某个状态是否属于"State.Debuff"类别）
+ */
 	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssertTags.AddLambda(
 		[this](const FGameplayTagContainer& AssertTags)	
 		{
 			for (FGameplayTag Tag: AssertTags)
 			{
 				//DOTO将标签广播到widget Controller
-				const FString Msg = FString::Printf(TEXT("test Tag is:%s"),*Tag.ToString());
-				GEngine->AddOnScreenDebugMessage(-1,8.f,FColor::Green,Msg);
 				
-				//在数据表中找到这个Tag对应的这一行
-				FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable,Tag);
-				//将这一行广播给小组件
+				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("message"));
+				//
+				if (Tag.MatchesTag(MessageTag))
+				{
+					//在数据表中找到这个Tag对应的这一行
+					const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable,Tag);
+					//将这一行广播给小组件
+					MessageWidgetRowDelegate.Broadcast(*Row);
+				}
 			}
 		}
 		);

@@ -7,22 +7,10 @@
 #include "UI/WidgetController/AuraWidgetController.h"
 #include "OverlayWidgetController.generated.h"
 
+
+
 class UAuraUserWidget;
 struct FOnAttributeChangeData;
-// 声明「血量变化」的动态多播委托（带1个浮点型参数）
-// 动态多播委托：支持C++和蓝图双向绑定/触发，可同时绑定多个回调函数
-// 参数说明：float NewHealth → 血量变化后的最新血量值
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature,float,NewHealth);
-
-// 声明「最大血量变化」的动态多播委托（带1个浮点型参数）
-// 参数说明：float NewMaxHealth → 最大血量变化后的最新上限值
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature,float,NewMaxHealth);
-
-//和上面一致只不过是蓝量的
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature,float,NewMana);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature,float,NewMaxMana);
-
 USTRUCT(BlueprintType)
 struct FUIWidgetRow:public FTableRowBase
 {
@@ -44,6 +32,19 @@ struct FUIWidgetRow:public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UTexture2D* Image = nullptr;
 };
+// 声明「血量变化」的动态多播委托（带1个浮点型参数）
+// 动态多播委托：支持C++和蓝图双向绑定/触发，可同时绑定多个回调函数
+// 参数说明：float NewHealth → 血量变化后的最新血量值
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature,float,NewHealth);
+// 声明「最大血量变化」的动态多播委托（带1个浮点型参数）
+// 参数说明：float NewMaxHealth → 最大血量变化后的最新上限值
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature,float,NewMaxHealth);
+//和上面一致只不过是蓝量的
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature,float,NewMana);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature,float,NewMaxMana);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature,FUIWidgetRow,ROW);
+
 
 
 /**
@@ -86,6 +87,10 @@ public:
 	//和上面一致只不过是蓝量的
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Attributes")
 	FOnMaxManaChangedSignature OnMaxManaChanged;
+	
+	UPROPERTY(BlueprintAssignable,Category = "GAS|Message")
+	FMessageWidgetRowSignature MessageWidgetRowDelegate;
+	
 protected:
 	
 	
