@@ -40,22 +40,34 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
 	
 	// 1. 绑定“当前血量”属性变化的回调：
-	// GetGameplayAttributeValueChangeDelegate：GAS提供的接口，获取指定属性（血量）的变化委托
-	// AddUObject：将“血量变化时要执行的函数（HealthChanged）”绑定到该委托，关联当前WidgetController实例
+	//GetGameplayAttributeValueChangeDelegate 是 UAttributeSet 类中的一个核心函数，用于获取一个 “属性值变化委托”。
+	//当指定的属性（如生命值、护甲、攻击力等）发生数值变化时，这个委托会被自动广播，从而触发绑定的回调函数（如 UI 更新、逻辑校验、特效播放等）。
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetHealthAttribute()
-		).AddUObject(this,&UOverlayWidgetController::HealthChanged);
+		).AddLambda([this](const FOnAttributeChangeData& Data)
+		{
+			OnHealthChanged.Broadcast(Data.NewValue);
+		});
 	
-	// 2. 绑定“最大血量”属性变化的回调：逻辑同上，监听最大血量属性变化
+	// 2. 绑定“最大血量”属性变化的回调：逻辑同上，监听最大血量属性变化,优化为使用lambda表达式
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetMaxHealthAttribute()
-		).AddUObject(this,&UOverlayWidgetController::MaxHealthChanged);
+		).AddLambda([this](const FOnAttributeChangeData& Data)
+		{
+			OnMaxHealthChanged.Broadcast(Data.NewValue);
+		});
 	
 	//和上面一样只不过时魔力的
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetManaAttribute()
-		).AddUObject(this,&UOverlayWidgetController::ManaChanged);
+		).AddLambda([this](const FOnAttributeChangeData& Data)
+		{
+			OnManaChanged.Broadcast(Data.NewValue);
+		});
 	
 	//和上面一致
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetManaAttribute()
-		).AddUObject(this,&UOverlayWidgetController::ManaChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetMaxManaAttribute()
+		).AddLambda([this](const FOnAttributeChangeData& Data)
+		{
+			OnMaxManaChanged.Broadcast(Data.NewValue);
+		});
 	
 	
 	
@@ -94,36 +106,3 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		);
 }
 
-/**
- * 血量属性变化的回调函数（由GAS自动触发）
- * @param Data GAS传递的属性变化数据（包含旧值、新值、变化原因等）
- * 执行时机：GAS中“当前血量”属性被修改时（比如受击掉血、回血、死亡）
- */
-void UOverlayWidgetController::HealthChanged(const FOnAttributeChangeData& Data) const
-{
-	// 广播最新血量值 → 通知UI更新（比如血条进度、血量数字显示）
-	OnHealthChanged.Broadcast(Data.NewValue);
-}
-
-/**
- * 最大血量属性变化的回调函数（由GAS自动触发）
- * @param Data GAS传递的属性变化数据
- * 执行时机：GAS中“最大血量”属性被修改时（比如升级、加buff、装备加成）
- */
-void UOverlayWidgetController::MaxHealthChanged(const FOnAttributeChangeData& Data) const
-{
-	// 广播最新最大血量值 → 通知UI更新（比如血条总长度、最大血量数字显示）
-	OnMaxHealthChanged.Broadcast(Data.NewValue);
-}
-
-//和上面一致，只不过是魔力
-void UOverlayWidgetController::ManaChanged(const FOnAttributeChangeData& Data) const
-{
-	OnManaChanged.Broadcast(Data.NewValue);
-}
-
-//和上面一致只不过是魔力
-void UOverlayWidgetController::MaxManaChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMaxManaChanged.Broadcast(Data.NewValue);
-}

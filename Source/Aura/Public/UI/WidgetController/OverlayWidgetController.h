@@ -32,6 +32,7 @@ struct FUIWidgetRow:public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UTexture2D* Image = nullptr;
 };
+/*
 // 声明「血量变化」的动态多播委托（带1个浮点型参数）
 // 动态多播委托：支持C++和蓝图双向绑定/触发，可同时绑定多个回调函数
 // 参数说明：float NewHealth → 血量变化后的最新血量值
@@ -42,6 +43,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature,float,N
 //和上面一致只不过是蓝量的
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature,float,NewMana);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature,float,NewMaxMana);
+*/
+//以上写法优化为声明一个动态多播委托即可，因为上面的委托就只是将一个新的float值传递出去
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature,float,NewValue);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature,FUIWidgetRow,ROW);
 
@@ -69,7 +73,7 @@ public:
 	 * Category = "GAS|Attributes"：在蓝图细节面板中归类，方便查找（GAS=能力系统，Attributes=属性）
 	 */
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Attributes")
-	FOnHealthChangedSignature OnHealthChanged;
+	FOnAttributeChangedSignature OnHealthChanged;
 	
 	/**
 	 * 【最大血量变化委托】- 蓝图可绑定
@@ -78,15 +82,15 @@ public:
 	 * Category = "GAS|Attributes"：归类到GAS属性模块，和其他属性委托统一管理
 	 */
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Attributes")
-	FOnMaxHealthChangedSignature OnMaxHealthChanged;
+	FOnAttributeChangedSignature OnMaxHealthChanged;
 	
 	//和上面一致只不过是蓝量的
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Attributes")
-	FOnManaChangedSignature OnManaChanged;
+	FOnAttributeChangedSignature OnManaChanged;
 	
 	//和上面一致只不过是蓝量的
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Attributes")
-	FOnMaxManaChangedSignature OnMaxManaChanged;
+	FOnAttributeChangedSignature OnMaxManaChanged;
 	
 	UPROPERTY(BlueprintAssignable,Category = "GAS|Message")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
@@ -97,15 +101,6 @@ protected:
 	//这个容器表中储存着一些信息，当gameEffect启效果的时候，会传入一个标签容器，查找这个容器内部的标签是否在这个表中存在，存在就将这个标签内部挂在的内容广播给小组件
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Weiget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
-	
-	//以下两个函数是当生命值和最大生命值改变的时候会被调用的函数
-	void HealthChanged(const FOnAttributeChangeData& Data) const;
-	void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
-	
-	//以下两个函数时当魔力值和最大魔力值发生变化的时候会被调用的函数
-	void ManaChanged(const FOnAttributeChangeData& Data) const;
-	void MaxManaChanged(const FOnAttributeChangeData& Data) const;
-	
 	
 	//这个模板函数之后会写入静态函数库中作用是接受任意类型的数据表并从中找到Tag对应的那一行
 	template<typename T>
