@@ -1,6 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+/*
+*在这里说明一下GE对产生效果的步骤：
+*1. 所有生效GE的修饰器叠加计算 → 得到「待修改的原始NewValue」（比如100+50-1=149）
+*2. 进入PreAttributeChange → 对「待修改的NewValue」做夹值（你原来的代码：149→100）
+*3. 应用修改 → 把夹值后的NewValue赋值给实际属性（Health=100）
+*4. 进入PostGameplayEffectExecute → 对「已修改后的实际属性值」做最终校验
+ */
 #include "AbilitySystem/AuraAttributeSet.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
@@ -44,6 +50,14 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana,COND_None, REPNOTIFY_Always);
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana,COND_None, REPNOTIFY_Always);
+    
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Strength,COND_None, REPNOTIFY_Always);
+    
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Intelligence,COND_None, REPNOTIFY_Always);
+    
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Resilience,COND_None, REPNOTIFY_Always);
+    
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Vigor,COND_None, REPNOTIFY_Always);
 }
 
 /**
@@ -154,11 +168,39 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
     // 解析效果的源/目标属性到Props中（核心：为后续逻辑提供数据支撑）
     SetFEffectProperties(Data, Props);
     
+    if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+    {
+        SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
+    }
+    if (Data.EvaluatedData.Attribute == GetManaAttribute())
+    {
+        SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
+    }
     // 【重要提示】：
     // 效果的产生场景不同，Props中的属性可能不全有效（如环境效果无SourceController）；
     // 后续使用Props中的属性（如SourceCharacter、TargetASC）时，必须通过IsValid()校验有效性，避免空指针崩溃。
 }
 
+
+void UAuraAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldVigor) const
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Vigor,OldVigor);
+}
+
+void UAuraAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldStrength) const
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Strength, OldStrength);
+}
+
+void UAuraAttributeSet::OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Intelligence, OldIntelligence);
+}
+
+void UAuraAttributeSet::OnRep_Resilience(const FGameplayAttributeData& OldResilience) const
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Resilience, OldResilience);
+}
 
 /**
  * @brief 生命值（Health）网络同步回调函数

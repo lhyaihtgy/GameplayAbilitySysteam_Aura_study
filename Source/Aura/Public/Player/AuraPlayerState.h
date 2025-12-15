@@ -23,7 +23,7 @@ public:
 protected:
 	
 	//玩家的能力系统组件
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAbilitySystemComponent>	AbilitySystemComponent;
 	
 	//玩家的属性集组件

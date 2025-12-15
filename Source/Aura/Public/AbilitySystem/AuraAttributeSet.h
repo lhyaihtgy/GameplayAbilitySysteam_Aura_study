@@ -92,6 +92,28 @@ public:
 	
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
+	
+	//下面是主要属性
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Intelligence, Category = "Primary Attributes")
+	FGameplayAttributeData Intelligence;
+	// 通过宏生成该属性的Get/Set/Init方法（如GetIntelligence()、SetIntelligence()、InitIntelligence()）
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Intelligence);
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "Primary Attributes")
+	FGameplayAttributeData Strength;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Strength);
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Resilience, Category = "Primary Attributes")
+	FGameplayAttributeData Resilience;
+	// 通过宏生成该属性的Get/Set/Init方法（如GetResilience()、SetResilience()、InitResilience()）
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Resilience);
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Vigor, Category = "Primary Attributes")
+	FGameplayAttributeData Vigor;
+	// 通过宏生成该属性的Get/Set/Init方法（如GetVigor()、SetVigor()、InitVigor()）
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Vigor);
+	
+	//下面是这个游戏的关键属性
 	/**
 	 * @brief 角色当前生命值（GAS标准属性）
 	 * @note 特性：
@@ -128,7 +150,18 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Vital Attributes")
 	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxMana);
-
+	
+	UFUNCTION()
+	void OnRep_Vigor(const FGameplayAttributeData& OldVigor) const;
+	
+	UFUNCTION()
+	void OnRep_Strength(const FGameplayAttributeData& OldStrength) const;
+	
+	UFUNCTION()
+	void OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const;
+	
+	UFUNCTION()
+	void OnRep_Resilience(const FGameplayAttributeData& OldResilience) const;
 	/**
 	 * @brief 生命值同步回调函数（客户端触发）
 	 * @note 触发时机：服务端Health属性变化，同步到客户端时调用
