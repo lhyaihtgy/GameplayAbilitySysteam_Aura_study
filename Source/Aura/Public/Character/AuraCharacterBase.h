@@ -42,6 +42,22 @@ protected:
 	UPROPERTY(BlueprintReadOnly,EditAnywhere,category="Attributes")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
 	
+	//初始化二级属性
+	UPROPERTY(BlueprintReadOnly,EditAnywhere,category="Attributes")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+	
+	
+	/*可以将下面的两个函数变成一个函数让一个函数完成初始化的全部工
 	//这个函数用于实现初始化主要属性
 	void InitializePrimaryAttributes() const;
+	//初始化二级属性使用
+	void InitializeSecondaryAttributes() const;
+	*/
+	//下面这个函数
+	void InitializeDefaultAttributes() const;
+	
+	//这个函数用于帮助上面这个函数完成初始化主要和二级属性
+	void ApplyEffectToself(TSubclassOf<UGameplayEffect> GameplayEffect,float level) const;
+	
+
 };

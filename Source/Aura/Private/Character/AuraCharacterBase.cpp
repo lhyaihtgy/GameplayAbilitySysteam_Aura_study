@@ -30,15 +30,27 @@ void AAuraCharacterBase::InitAbilitySystemInfo()
 {
 }
 
-void AAuraCharacterBase::InitializePrimaryAttributes() const 
+
+void AAuraCharacterBase::ApplyEffectToself(TSubclassOf<UGameplayEffect> GameplayEffect, float level) const
 {
 	check(IsValid(GetAbilitySystemComponent()));
-	check(DefaultPrimaryAttributes);
+	check(GameplayEffect);
 	const FGameplayEffectContextHandle ContextHandle =  GetAbilitySystemComponent()->MakeEffectContext();
-	const FGameplayEffectSpecHandle EffectSpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(DefaultPrimaryAttributes,1.f,ContextHandle);
+	const FGameplayEffectSpecHandle EffectSpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffect,level,ContextHandle);
 	//需要一个GameSpec来激活这个游戏效果
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 }
+
+void AAuraCharacterBase::InitializeDefaultAttributes() const
+{
+	ApplyEffectToself(DefaultPrimaryAttributes,1.f);
+	ApplyEffectToself(DefaultSecondaryAttributes,1.f);
+}
+
+
+
+
+
 
 
 

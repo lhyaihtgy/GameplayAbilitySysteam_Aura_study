@@ -113,7 +113,7 @@ public:
 	// 通过宏生成该属性的Get/Set/Init方法（如GetVigor()、SetVigor()、InitVigor()）
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Vigor);
 	
-	//下面是这个游戏的关键属性
+	//下面是这个游戏的关键属性（不依赖其他属性）
 	/**
 	 * @brief 角色当前生命值（GAS标准属性）
 	 * @note 特性：
@@ -127,13 +127,7 @@ public:
 	// 通过宏生成该属性的Get/Set/Init方法（如GetHealth()、SetHealth()、InitHealth()）
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Health);
 	
-	/**
-	 * @brief 角色最大生命值（GAS标准属性）
-	 * @note 特性与Health一致，用于限制生命值的上限
-	 */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attributes")
-	FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxHealth);
+
 	
 	/**
 	 * @brief 角色当前魔力值（GAS标准属性）
@@ -143,15 +137,10 @@ public:
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Mana);
 	
-	/**
-	 * @brief 角色最大魔力值（GAS标准属性）
-	 * @note 特性与MaxHealth一致，用于限制魔力值的上限
-	 */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Vital Attributes")
-	FGameplayAttributeData MaxMana;
-	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxMana);
 	
-	/*下面是这个游戏的2级次要属性*/
+	/*下面是这个游戏的2级次要属性（依赖其他属性），当主要属性发生变化的时候会影响到次要属性
+	 * 而次要属性和游戏机制有关，比如暴击让伤害增加等等
+	 */
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Armor, Category = "Secondary Attributes")
 	FGameplayAttributeData Armor;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Armor);
@@ -183,6 +172,20 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ManaRegeneration, Category = "Secondary Attributes")
 	FGameplayAttributeData ManaRegeneration;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, ManaRegeneration);
+	/**
+     * @brief 角色最大生命值（GAS标准属性）
+     * @note 特性与Health一致，用于限制生命值的上限
+     */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attributes")
+	FGameplayAttributeData MaxHealth;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxHealth);
+	/**
+	* @brief 角色最大魔力值（GAS标准属性）
+	* @note 特性与MaxHealth一致，用于限制魔力值的上限
+	*/
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Vital Attributes")
+	FGameplayAttributeData MaxMana;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxMana);
 	
 	UFUNCTION()
 	void OnRep_Vigor(const FGameplayAttributeData& OldVigor) const;

@@ -19,8 +19,6 @@ UAuraAttributeSet::UAuraAttributeSet()
     //这个函数就是通过ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Health);宏生成的
     InitHealth(5.0f);
     InitMana(5.0f);
-    InitMaxMana(50.0f);
-    InitMaxHealth(100.0f);
 }
 
 /**

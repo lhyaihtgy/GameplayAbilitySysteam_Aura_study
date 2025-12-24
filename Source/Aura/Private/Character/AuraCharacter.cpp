@@ -55,7 +55,7 @@ void AAuraCharacter::InitAbilitySystemInfo()
 	}
 	
 	//这个函数只需要在服务端调用，因为这些初始化的这些属性具有复制效果会拷贝到客户端，但是也可以两端同时执行，减少了复制时间
-	InitializePrimaryAttributes();
+	InitializeDefaultAttributes();
 	
 }
 
