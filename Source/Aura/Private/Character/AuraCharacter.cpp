@@ -90,6 +90,19 @@ void AAuraCharacter::OnRep_PlayerState()
     InitAbilitySystemInfo();
 }
 
+int32 AAuraCharacter::GetPlayerLevel()
+{
+	//对于玩家操作的角色来说等级在playerstate中需要首先获取playerstate
+	// 从角色获取对应的Aura自定义PlayerState（存储全局玩家状态，包含ASC和属性集）
+	// GetPlayerState<T> 是模板函数，自动类型转换，确保获取到正确的PlayerState子类
+	AAuraPlayerState* AuraPlayerState = GetPlayerState<AAuraPlayerState>();
+	// 断言检查：确保PlayerState存在（若为空则触发崩溃，提示开发者排查PlayerState创建问题）
+	check(AuraPlayerState);
+	
+	//通过playerstate中的get函数获取角色等级
+	return AuraPlayerState->GetPlayerLevel();
+}
+
 AAuraCharacter::AAuraCharacter()
 {
 	

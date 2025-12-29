@@ -69,6 +69,12 @@ void AAuraEnemyCharacter::UnHightLightEnemy()
 	Weapon->SetCustomDepthStencilValue(false);
 }
 
+//对于敌人类来说等级是类内部的成员变量直接获取即可
+int32 AAuraEnemyCharacter::GetPlayerLevel()
+{
+	return Level;
+}
+
 void AAuraEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();	

@@ -1,0 +1,11 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Interaction/CombatInterface.h"
+
+// Add default functionality here for any ICombatInterface functions that are not pure virtual.
+//默认的实现返回0
+int32 ICombatInterface::GetPlayerLevel()
+{
+	return 0;
+}
