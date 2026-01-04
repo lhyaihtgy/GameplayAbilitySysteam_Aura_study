@@ -39,6 +39,10 @@ protected:
 	
 	virtual void InitAbilitySystemInfo();
 	
+	//这个GE效果用于初始化重要属性初始生命值和魔力值
+	UPROPERTY(BlueprintReadOnly,EditAnywhere,category="Attributes")
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+	
 	//这个GE效果用于在游戏开始时初始化主要属性
 	UPROPERTY(BlueprintReadOnly,EditAnywhere,category="Attributes")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
