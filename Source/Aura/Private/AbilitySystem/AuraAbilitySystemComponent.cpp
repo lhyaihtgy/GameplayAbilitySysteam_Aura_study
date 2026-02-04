@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 
+#include "AuraGameplayTags.h"
 #include "GameplayTagsManager.h"
 
 /**
@@ -16,6 +17,10 @@ void UAuraAbilitySystemComponent::AbilityActorInfoSet()
 	// 自动触发EffectApplied回调函数
 	// AddUObject：基于UObject的委托绑定方式，保证GC安全（对象销毁时委托自动解绑）
 	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&UAuraAbilitySystemComponent::EffectApplied);
+	
+	const FAuraGameplayTags& GameplayTags =  FAuraGameplayTags::Get();
+	//测试这个标签是否真的创建
+	GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Red,FString::Printf(TEXT("Tag: %s"),*GameplayTags.Attributes_Secondary_Armor.ToString()));
 }
 /**
  * @brief GameplayEffect应用到自身时的回调函数

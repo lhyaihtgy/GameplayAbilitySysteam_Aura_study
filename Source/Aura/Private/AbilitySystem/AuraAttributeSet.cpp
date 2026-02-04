@@ -40,15 +40,12 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
     // 用途：确保客户端能实时响应生命值变更（如UI刷新、受伤特效），即使值未变也需触发（如特殊逻辑判定）
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Health, COND_None, REPNOTIFY_Always);
 
-    // 注册MaxHealth属性的同步规则（与Health逻辑一致）：
-    // 同步条件无限制，强制触发OnRep_MaxHealth回调
-    // 用途：最大生命值变更时（如升级、装备加成），客户端需及时刷新UI上限、属性面板等
-    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxHealth,COND_None, REPNOTIFY_Always);
+
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana,COND_None, REPNOTIFY_Always);
     
-    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana,COND_None, REPNOTIFY_Always);
     
+    //Primary Attributes
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Strength,COND_None, REPNOTIFY_Always);
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Intelligence,COND_None, REPNOTIFY_Always);
@@ -57,6 +54,7 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Vigor,COND_None, REPNOTIFY_Always);
     
+    //Secondary Attributes
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Armor,COND_None, REPNOTIFY_Always);
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, ArmorPenetration,COND_None, REPNOTIFY_Always);
@@ -72,6 +70,13 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, HealthRegeneration,COND_None, REPNOTIFY_Always);
     
     DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, ManaRegeneration,COND_None, REPNOTIFY_Always);
+    
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana,COND_None, REPNOTIFY_Always);
+    
+    // 注册MaxHealth属性的同步规则（与Health逻辑一致）：
+    // 同步条件无限制，强制触发OnRep_MaxHealth回调
+    // 用途：最大生命值变更时（如升级、装备加成），客户端需及时刷新UI上限、属性面板等
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxHealth,COND_None, REPNOTIFY_Always);
 }
 
 /**
