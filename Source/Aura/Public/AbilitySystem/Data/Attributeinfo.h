@@ -40,7 +40,7 @@ class AURA_API UAttributeinfo : public UDataAsset
 public:
 	
 	//通过属性标签获得属性信息结构体
-	FAuraAttributeInfo FindAttributeinfoForTag(const FGameplayTag& tag,bool bLognotFound) const;
+	FAuraAttributeInfo FindAttributeinfoForTag(const FGameplayTag& tag,bool bLognotFound = false) const;
 	
 	//用来保存属性信息的集合
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
