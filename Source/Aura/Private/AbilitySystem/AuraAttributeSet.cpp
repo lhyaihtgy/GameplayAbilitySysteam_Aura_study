@@ -10,6 +10,7 @@
 #include "AbilitySystem/AuraAttributeSet.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AuraGameplayTags.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
@@ -17,8 +18,48 @@
 UAuraAttributeSet::UAuraAttributeSet()
 {
     //这个函数就是通过ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Health);宏生成的
-    InitHealth(5.0f);
-    InitMana(5.0f);
+    //InitHealth(5.0f);
+    //InitMana(5.0f);
+    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    
+    //版本1创建力量属性委托，将委托绑定静态函数，这个委托绑定的就是属性访问器，通过这个属性访问器函数能够得到属性的值，放入到map中
+    //FAttributeSignature StrengthSignature;
+    //StrengthSignature.BindStatic(GetStrengthAttribute);
+    //TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength, StrengthSignature);
+    
+    //智力属性
+    //FAttributeSignature IntelligenceSignature;
+    //IntelligenceSignature.BindStatic(GetIntelligenceAttribute);
+    //TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, IntelligenceSignature);
+    
+    //韧性属性
+    //FAttributeSignature ResilienceSignature;
+    //ResilienceSignature.BindStatic(GetResilienceAttribute);
+    //TagsToAttributes.Add(GameplayTags.Attributes_Primary_Resilience, ResilienceSignature);
+    
+    //活力属性
+    //FAttributeSignature VigorSignature;
+    //VigorSignature.BindStatic(GetVigorAttribute);
+    //TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor, VigorSignature);
+    
+    //版本2，直接储存这个静态函数
+    //一级属性
+    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength,GetStrengthAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence,GetIntelligenceAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Resilience,GetResilienceAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor,GetVigorAttribute);
+    
+    //二级属性
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Armor,GetArmorAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ArmorPenetration,GetArmorPenetrationAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_BlockChance,GetBlockChanceAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitChance,GetCriticalHitChanceAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitDamage,GetCriticalHitDamageAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitResistance,GetCriticalHitResistanceAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_HealthRegeneration,GetHealthRegenerationAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ManaRegeneration,GetManaRegenerationAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth,GetMaxHealthAttribute);
+    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMana,GetMaxManaAttribute);
 }
 
 /**

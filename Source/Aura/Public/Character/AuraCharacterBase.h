@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
 #include "AuraCharacterBase.generated.h"
@@ -11,6 +12,7 @@
 class UGameplayEffect;
 class UAbilitySystemComponent;
 class UAttributeSet;
+class UGameplayAbility;
 UCLASS(ABSTRACT)
 class AURA_API AAuraCharacterBase : public ACharacter,public IAbilitySystemInterface,public ICombatInterface
 {
@@ -64,5 +66,11 @@ protected:
 	//这个函数用于帮助上面这个函数完成初始化主要和二级属性
 	void ApplyEffectToself(TSubclassOf<UGameplayEffect> GameplayEffect,float level) const;
 	
-
+	//这个函数的作用是往技能容器中增加技能，并且只能在服务端增加技能，客户端不允许往这个容器中增加技能
+	void AddCharacterAbilities();
+private:
+	//角色在游戏一开始就会拥有的能力
+	UPROPERTY(EditAnywhere,Category="Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
+	
 };

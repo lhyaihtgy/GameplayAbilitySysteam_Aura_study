@@ -26,6 +26,8 @@
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+
+
 USTRUCT()
 struct FEffectProperties
 {
@@ -52,6 +54,11 @@ struct FEffectProperties
 	UPROPERTY()
 	ACharacter* TargetCharacter = nullptr;
 };
+
+//using FAttributeFuncPtr = TBaseStaticDelegateInstance<FGameplayAttribute(),FDefaultDelegateUserPolicy>::FFuncPtr;
+template<class T>
+using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T,FDefaultDelegateUserPolicy>::FFuncPtr; 
+
 /**
  * @brief 角色核心属性集（AttributeSet），基于UE GAS框架实现
  * @note 作用：统一管理角色的生命值、魔力值等核心属性，提供GAS标准的属性同步、修改、回调机制
@@ -66,7 +73,13 @@ class AURA_API UAuraAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 
 public:
+	//通过游戏标签得到一个静态的委托，这个委托可以绑定函数，这个函数就会返回对应属性的结构体信息，版本1
+	//版本2直接让标签和储存静态函数的类似functional的模板储存函数类放在一起，让标签和标签对应属性的静态属性访问函数进行对应
+	TMap<FGameplayTag,TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
+	
+	
 	/**
+	 * @brief 构造函数：初始化属性集的默认配置
 	 * @brief 构造函数：初始化属性集的默认配置
 	 * @note 执行时机：AttributeSet实例创建时（与持有该组件的Actor同步创建）
 	 * 核心用途：初始化属性默认值、绑定属性修改回调（可选）

@@ -19,6 +19,23 @@ void UAuraAbilitySystemComponent::AbilityActorInfoSet()
 	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&UAuraAbilitySystemComponent::EffectApplied);
 	
 }
+
+void UAuraAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StarupAbilities)
+{
+	for(auto AbilityClass:StarupAbilities)
+	{
+		//将技能组中的技能增加到技能系统组件中标准步骤如下：
+		//1.检查AbilityClass是否有效，防止空指针错误
+		check(AbilityClass);
+		//2.创建一个GameplayAbilitySpec对象，包含技能类、等级、输入绑定等信息
+		FGameplayAbilitySpec AbilitySpec(AbilityClass,1);
+		//3.将GameplayAbilitySpec添加到当前ASC中，使其生效，并不会激活一次技能
+		//GiveAbility(AbilitySpec);
+		//这个函数的作用是增加到技能系统组件中后立即激活一次技能，触发技能的开始阶段（比如播放动画、生成特效等），
+		GiveAbilityAndActivateOnce(AbilitySpec);
+	}
+}
+
 /**
  * @brief GameplayEffect应用到自身时的回调函数
  * @param AbilitySystemComponent 应用GameplayEffect的目标AbilitySystemComponent（此处即当前ASC自身）

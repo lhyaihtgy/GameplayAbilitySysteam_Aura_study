@@ -72,6 +72,9 @@ void AAuraCharacter::PossessedBy(AController* NewController)
     // 服务器端初始化GAS信息
     // 关键前提：控制器已绑定，PlayerState已同步到角色，此时初始化ASC可确保ActorInfo完整（包含Controller、PlayerState、Avatar）
     InitAbilitySystemInfo();
+	// 服务器端增加角色的技能：只有服务器具有权威，才能安全地将技能添加到ASC中，客户端不允许直接修改技能列表
+	// 该函数会将StartupAbilities中的技能类实例化为GameplayAbilitySpec，并添加到ASC中，使其生效，现在针对的是玩家角色，敌人角色的技能在BeginPlay函数中增加
+	AddCharacterAbilities();
 }
 
 /**

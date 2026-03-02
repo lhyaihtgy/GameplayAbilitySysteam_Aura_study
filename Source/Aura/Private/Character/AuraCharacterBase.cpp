@@ -3,6 +3,7 @@
 
 #include "Character/AuraCharacterBase.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 
 // Sets default values
 AAuraCharacterBase::AAuraCharacterBase()
@@ -45,6 +46,20 @@ void AAuraCharacterBase::ApplyEffectToself(TSubclassOf<UGameplayEffect> Gameplay
 	const FGameplayEffectSpecHandle EffectSpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffect,level,ContextHandle);
 	// 使用生成的GameEffect规格将游戏效果应用到自己身上
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+}
+
+//什么时候调用这个函数让角色能够获取到游戏一开始就应该拥有的技能呢，对于玩家操作的角色在Possess函数中调用，在敌人角色的BeginPlay函数中调用
+//在possess函数中调用因为玩家角色的技能是由玩家控制的，所以在玩家角色被控制器接管时就应该让它拥有技能，而敌人角色的技能是由AI控制的，所以在敌人角色开始游戏时就应该让它拥有技能
+void AAuraCharacterBase::AddCharacterAbilities()
+{
+	UAuraAbilitySystemComponent* AuraASC = CastChecked<UAuraAbilitySystemComponent>(AbilitySysteamComponent);
+	//非服务端没有资格增加技能
+	if (!HasAuthority())
+	{
+		return;
+	}
+	
+	AuraASC->AddCharacterAbilities(StartupAbilities);
 }
 
 void AAuraCharacterBase::InitializeDefaultAttributes() const

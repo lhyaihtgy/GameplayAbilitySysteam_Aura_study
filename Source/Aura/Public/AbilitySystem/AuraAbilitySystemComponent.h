@@ -19,6 +19,9 @@ public:
 	void AbilityActorInfoSet();
 	
 	FEffectAssertTags EffectAssertTags;
+	
+	//增加角色的技能到技能系统组件中
+	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StarupAbilities);
 protected:
 	void EffectApplied(UAbilitySystemComponent* AbilitySystemComponent,const FGameplayEffectSpec& EffectSpec,FActiveGameplayEffectHandle ActiveEffectHandle);
 };
