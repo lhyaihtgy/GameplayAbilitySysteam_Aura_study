@@ -34,8 +34,17 @@ public:
 	FGameplayTag Attributes_Secondary_ManaRegeneration;
 	FGameplayTag Attributes_Secondary_MaxHealth;
 	FGameplayTag Attributes_Secondary_MaxMana;
-protected:
 	
+	//左键鼠标输入标签
+	FGameplayTag InputTag_LMB;
+	//右键鼠标输入标签
+	FGameplayTag InputTag_RMB;
+	
+	//同上数字键的输入标签
+	FGameplayTag InputTag_1;
+	FGameplayTag InputTag_2;
+	FGameplayTag InputTag_3;
+	FGameplayTag InputTag_4;
 private:
 	static FAuraGameplayTags GameplayTags;
 };

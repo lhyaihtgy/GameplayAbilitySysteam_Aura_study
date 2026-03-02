@@ -83,6 +83,37 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 		FString("角色最大魔力量")
 		);
 	
+	
+	//输入标签定义和添加
+	//储存输入标签这个Tag在我的标签管理类中
+	GameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.LMB"),
+		FString("鼠标左键输入标签")
+		);
+	
+
+	GameplayTags.InputTag_RMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.RMB"),
+		FString("鼠标右键输入标签")
+		);
+	
+	GameplayTags.InputTag_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.1"),
+		FString("数字按键1输入标签")
+		);
+	
+	GameplayTags.InputTag_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.2"),
+		FString("数字按键2输入标签")
+		);
+	GameplayTags.InputTag_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.3"),
+		FString("数字按键3输入标签")
+		);
+	GameplayTags.InputTag_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.4"),
+		FString("数字按键4输入标签")
+		);
 }
 
 FAuraGameplayTags FAuraGameplayTags::GameplayTags;
