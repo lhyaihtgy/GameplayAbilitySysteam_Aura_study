@@ -7,6 +7,7 @@
 #include "Engine/DataAsset.h"
 #include "AuraInputConfig.generated.h"
 
+class UInputAction;
 //输入配置数据资产
 USTRUCT(BlueprintType)
 struct FAuaInputAction
@@ -14,7 +15,7 @@ struct FAuaInputAction
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly)
-	const class UInputAction* InputAction = nullptr;
+	const UInputAction* InputAction {nullptr};
 	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag InputTag = FGameplayTag();

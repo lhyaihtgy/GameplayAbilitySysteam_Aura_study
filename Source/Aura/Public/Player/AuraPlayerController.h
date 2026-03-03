@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTagContainer.h"
 #include "AuraPlayerController.generated.h"
 
+class UAuraInputConfig;
 struct FInputActionValue;
 class UInputMappingContext;	
 class UInputAction;
@@ -20,9 +22,7 @@ class AURA_API AAuraPlayerController : public APlayerController
 public:
 	AAuraPlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
-protected:
-	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override;//配置输入组件，将输入动作（如移动）与对应的处理函数绑定，是输入系统初始化的关键步骤。  
+
 
 private:
 	UPROPERTY(EditAnywhere,Category = "Input")
@@ -40,4 +40,15 @@ private:
 	IEnemyInterface* ThisActor;
 	//Tick检测中这一帧率，鼠标下的actor类型
 	IEnemyInterface* LastActor;
+	
+	//以下三个函数由增强输入组件调用，用于处理能力输入标签的按下、释放和持续按下事件，是按键按下时具体会执行的函数
+	void AbilityInputTagPressed(FGameplayTag InputTag);
+	void AbilityInputTagReleased(FGameplayTag InputTag);
+	void AbilityInputTagHeld(FGameplayTag InputTag);
+	
+	UPROPERTY(EditDefaultsOnly,Category = "Input")
+	TObjectPtr<UAuraInputConfig> InputConfig;
+protected:
+	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;//配置输入组件，将输入动作（如移动）与对应的处理函数绑定，是输入系统初始化的关键步骤。  
 };

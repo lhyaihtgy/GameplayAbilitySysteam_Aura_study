@@ -3,8 +3,8 @@
 
 #include "Player/AuraPlayerController.h"
 #include "InputAction.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Input/AuraInputComponent.h"
 #include "Interaction/EnemyInterface.h"
 
 AAuraPlayerController::AAuraPlayerController()
@@ -87,10 +87,26 @@ void AAuraPlayerController::CursorTrace()
 	}
 	
 }
+
+void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+{
+	GEngine->AddOnScreenDebugMessage(1,3,FColor::Green,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+}
+
+void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+{
+	GEngine->AddOnScreenDebugMessage(2,3,FColor::Blue,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+}
+
+void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+{
+	GEngine->AddOnScreenDebugMessage(3,3,FColor::Red,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+}
+
 void AAuraPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
+ 
 	
 	check(AuraContext);
 
@@ -121,10 +137,13 @@ void AAuraPlayerController::BeginPlay()
 void AAuraPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);//将默认输入组件替换为增强输入组件
+	//将默认输入组件替换为Aura自定义的增强输入组件
+	UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
 	
-	EnhancedInputComponent->BindAction(MoveAction,ETriggerEvent::Triggered,this,&AAuraPlayerController::Move);//获得输入数据之后将由move函数来处理
-	
+	//获得输入数据之后将由move函数来处理
+	AuraInputComponent->BindAction(MoveAction,ETriggerEvent::Triggered,this,&AAuraPlayerController::Move);
+	//绑定能力输入标签的按下、释放和持续按下事件
+	AuraInputComponent->BindAbilityAction(InputConfig,this,&ThisClass::AbilityInputTagPressed,&ThisClass::AbilityInputTagReleased,&ThisClass::AbilityInputTagHeld); 
 }
 
 //对于移动输入的具体逻辑在这个函数中进行实现
