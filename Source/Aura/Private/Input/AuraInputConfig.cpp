@@ -7,7 +7,7 @@ const UInputAction* UAuraInputConfig::FindAbilityInputActionForTag(const FGamepl
 {
 	for (const auto Action:AbilityInputActions)
 	{
-		if (Action.InputAction&& Action.Tag == InputTag)
+		if (Action.InputAction&& Action.InputTag == InputTag)
 		{
 			return Action.InputAction;
 		}
