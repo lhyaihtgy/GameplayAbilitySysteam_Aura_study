@@ -2,6 +2,8 @@
 
 
 #include "Player/AuraPlayerController.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
 #include "Input/AuraInputComponent.h"
@@ -90,17 +92,28 @@ void AAuraPlayerController::CursorTrace()
 
 void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	GEngine->AddOnScreenDebugMessage(1,3,FColor::Green,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+	//GEngine->AddOnScreenDebugMessage(1,3,FColor::Green,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
 }
 
 void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	GEngine->AddOnScreenDebugMessage(2,3,FColor::Blue,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+	if (GetAsc() == nullptr) return;
+	GetAsc()->AbilityInputTagReleased(InputTag);
 }
 
 void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
-	GEngine->AddOnScreenDebugMessage(3,3,FColor::Red,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+	if (GetAsc() == nullptr) return;
+	GetAsc()->AbilityInputTagHeld(InputTag);
+}
+
+UAuraAbilitySystemComponent* AAuraPlayerController::GetAsc()
+{
+	if (AuraAbilitySystemComponent == nullptr)
+	{
+		AuraAbilitySystemComponent = Cast<UAuraAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+	return AuraAbilitySystemComponent;
 }
 
 void AAuraPlayerController::BeginPlay()

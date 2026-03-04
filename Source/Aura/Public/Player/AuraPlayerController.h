@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AuraPlayerController.generated.h"
 
 class UAuraInputConfig;
@@ -23,7 +24,9 @@ public:
 	AAuraPlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
 
-
+protected:
+	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;//配置输入组件，将输入动作（如移动）与对应的处理函数绑定，是输入系统初始化的关键步骤。 
 private:
 	UPROPERTY(EditAnywhere,Category = "Input")
 	TObjectPtr<UInputMappingContext> AuraContext;
@@ -48,7 +51,8 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly,Category = "Input")
 	TObjectPtr<UAuraInputConfig> InputConfig;
-protected:
-	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override;//配置输入组件，将输入动作（如移动）与对应的处理函数绑定，是输入系统初始化的关键步骤。  
+	UPROPERTY()
+	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
+ 
+	UAuraAbilitySystemComponent* GetAsc();
 };

@@ -56,7 +56,7 @@ void AAuraCharacterBase::AddCharacterAbilities()
 	//非服务端没有资格增加技能
 	if (!HasAuthority())
 	{
-		return;
+		return; 
 	}
 	
 	AuraASC->AddCharacterAbilities(StartupAbilities);
