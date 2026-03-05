@@ -7,6 +7,8 @@
 #include "AuraGameplayTags.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "Components/SplineComponent.h"
 #include "Input/AuraInputComponent.h"
 #include "Interaction/EnemyInterface.h"
@@ -108,8 +110,44 @@ void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 
 void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	if (GetAsc() == nullptr) return;
-	GetAsc()->AbilityInputTagReleased(InputTag);
+	//如果按下的并不是鼠标左键，那就要激活对应按键标签对应的技能
+	if (!(InputTag == FAuraGameplayTags::Get().InputTag_LMB))
+	{
+		if (GetAsc())
+			GetAsc()->AbilityInputTagReleased(InputTag);
+		return;
+	}
+	//按下鼠标左键，并且鼠标左键对应的是敌人需要激活鼠标左键对应的技能
+	if (bTargeting)
+	{
+		if (GetAsc())
+			GetAsc()->AbilityInputTagHeld(InputTag);
+	}
+	else
+	{
+		APawn* ControlledPawn = GetPawn();
+		//鼠标左键短按到一个地点了，我要进行短按的逻辑
+		//首先判断时间是否符合短按的条件
+		if (FollowTime<=ShortPressThreshold&&ControlledPawn)
+		{
+			//需要创建一个导航路径点数组
+			if (UNavigationPath* Navpath =  UNavigationSystemV1::FindPathToLocationSynchronously(this,ControlledPawn->GetActorLocation(),CachedDestination))
+			{
+				//Navpath中就是一个导航路径，PathPoints就是这个导航路径中的路径点数组
+				Spline->ClearSplinePoints();
+				for (const FVector& PointLoc:Navpath->PathPoints)
+				{
+					Spline->AddSplinePoint(PointLoc,ESplineCoordinateSpace::World);
+					DrawDebugSphere(GetWorld(),PointLoc,25.f,12,FColor::Red,false,5.f);
+				}
+				//短按左键且无锁定敌人时自动寻路
+				bAutoRuning = true;
+			}
+		}
+		//这是松开左键的函数
+		FollowTime = 0;
+		bTargeting = false;
+	}
 }
 
 void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
