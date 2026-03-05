@@ -4,14 +4,18 @@
 #include "Player/AuraPlayerController.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AuraGameplayTags.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/SplineComponent.h"
 #include "Input/AuraInputComponent.h"
 #include "Interaction/EnemyInterface.h"
 
 AAuraPlayerController::AAuraPlayerController()
 {
 	bReplicates = true;
+	//实例化曲线变量
+	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
 
 void AAuraPlayerController::PlayerTick(float DeltaTime)
@@ -92,7 +96,14 @@ void AAuraPlayerController::CursorTrace()
 
 void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	//GEngine->AddOnScreenDebugMessage(1,3,FColor::Green,FString::Printf(TEXT("按下了输入标签：%s"),*InputTag.ToString()));
+	//当前标签对应的就是鼠标左键的标签，代表鼠标左键被按下了
+	if (InputTag == FAuraGameplayTags::Get().InputTag_LMB)
+	{
+		//当上一帧中判断目标点击物体是一个actor，并且实现了高亮代表是敌人，此时敌人标签就是true，点击左键，应该释放技能，反之移动
+		bTargeting = ThisActor? true: false;
+		//刚刚按下左键时，并不知道当前这个点击时长还是短此时不能启动自动移动
+		bAutoRuning = false;
+	}
 }
 
 void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
@@ -103,8 +114,43 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 
 void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
-	if (GetAsc() == nullptr) return;
-	GetAsc()->AbilityInputTagHeld(InputTag);
+	//如果长按下的并不是鼠标左键，那就要激活对应按键标签对应的技能
+	if (!(InputTag == FAuraGameplayTags::Get().InputTag_LMB))
+	{
+		if (GetAsc())
+			GetAsc()->AbilityInputTagHeld(InputTag);
+		return;
+	}
+	//长按鼠标左键，并且鼠标左键对应的是敌人需要激活鼠标左键对应的技能
+	if (bTargeting)
+	{
+		if (GetAsc())
+			GetAsc()->AbilityInputTagHeld(InputTag);
+	}
+	else
+	{
+		//这里就是处理长按点击移动的逻辑
+		
+		//将按下左键的每一帧的时间机器加到左键按下时间记录的变量里面
+		FollowTime += GetWorld()->GetDeltaSeconds();
+		
+		FHitResult Hit;
+		//获取这一次点击的碰撞结果
+		if (GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		{
+			//这个点击的位置就是目标位置
+			CachedDestination = Hit.ImpactPoint;
+		}
+		
+		//确保这是受控制的角色
+		if (APawn* ControlledPawn = GetPawn())
+		{
+			//目标位置的向量-受控制的角色位置的向量就是从受控制的角色位置到目标位置的路径
+			const FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+			//调用被控制角色的移动组件移动角色到目标地点
+			ControlledPawn->AddMovementInput(WorldDirection);
+		}
+	}
 }
 
 UAuraAbilitySystemComponent* AAuraPlayerController::GetAsc()

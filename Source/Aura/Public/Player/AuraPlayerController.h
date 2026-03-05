@@ -8,6 +8,7 @@
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AuraPlayerController.generated.h"
 
+class USplineComponent;
 class UAuraInputConfig;
 struct FInputActionValue;
 class UInputMappingContext;	
@@ -55,4 +56,24 @@ private:
 	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
  
 	UAuraAbilitySystemComponent* GetAsc();
+	
+	//记录鼠标点击位置的向量坐标，也就是人物移动的终点坐标
+	FVector CachedDestination = FVector::ZeroVector;
+	//记录按下鼠标的时间
+	float FollowTime = 0.0f;
+	//短按的时间阈值，超过这个时间就是长按
+	float ShortPressThreshold = 0.5f;
+	//自动寻路是否开启，开启那么每一帧都要调用移动函数
+	bool bAutoRuning = false;
+	//因为鼠标左键点击比较特殊，当鼠标左键点击到了敌人身上，此时应该释放左边绑定的技能，而没有点击到敌人身上就应该进行移动
+	//这个变量就是判断是否点击到了敌人身上
+	bool bTargeting = false;
+	//自动移动的时候距离目的地会越来越近，当距离目的地多远的时候会进行一个操作（这个操作可以是停止自动移动）
+	//该变量定义多远
+	UPROPERTY(EditDefaultsOnly)
+	float AutoRunAcceptanceRadius = 50.0f;
+	
+	//储存从初始地到目的地计算出来的曲线，方便移动使用
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USplineComponent> Spline;
 };
