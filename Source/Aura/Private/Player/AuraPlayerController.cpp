@@ -19,20 +19,64 @@ AAuraPlayerController::AAuraPlayerController()
 	//实例化曲线变量
 	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
-
+void AAuraPlayerController::AutoRun()
+{
+	//如果不在自动移动状态就不执行自动移动的逻辑
+	if (!bAutoRuning) return;
+	//检测这个controller控制的是否是一个正确的角色
+	if (APawn* Controlledpawn = GetPawn())
+	{
+		//获取这个角色到当前鼠标点击位置的路径上距离角色最近的点的位置坐标
+		const FVector LocationSpline = Spline->FindLocationClosestToWorldLocation(Controlledpawn->GetActorLocation(),ESplineCoordinateSpace::World);
+		//获取这个角色到当前鼠标点击位置的路径上距离角色最近的点的切线方向向量
+		//Direction决定了在自动移动的时候我们的角色移动的方向
+		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationSpline,ESplineCoordinateSpace::World);
+		Controlledpawn->AddMovementInput(Direction);
+		//获取当前角色位置到鼠标点击位置的距离
+		const float DistanceToDestination = (LocationSpline-CachedDestination).Length();
+		if (DistanceToDestination<AutoRunAcceptanceRadius)
+		{
+			//到达鼠标点击的附近，就停止自动移动
+			bAutoRuning = false;
+		}
+		
+	}
+}
 void AAuraPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 	
-	//没帧检测是否需要高亮当前鼠标下的actor
+	//每帧检测是否需要高亮当前鼠标下的actor
 	CursorTrace();
+	//自动移动的处理函数，每帧调用
+	AutoRun();
 }
 void AAuraPlayerController::CursorTrace()
 {
+	/*
+	 * 精简版本
+	 */
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorResults);
+	if (!CursorResults.bBlockingHit) return;
+	LastActor = ThisActor;
+	ThisActor = Cast<IEnemyInterface>(CursorResults.GetActor());
+	if (ThisActor!=LastActor)
+	{
+		if (LastActor)
+		{
+			//这一帧鼠标下的敌人actor，不是上一帧鼠标下的敌人actor，并且上一帧鼠标下的敌人actor是有效的，那么就取消上一帧鼠标下的敌人actor的高亮
+			LastActor->UnHightLightEnemy();
+		}
+		//这一帧鼠标下的敌人actor，不是上一帧鼠标下的敌人actor，并且这一帧鼠标下的敌人actor是有效的，那么就高亮这一帧鼠标下的敌人actor
+		if (ThisActor) ThisActor->HightLightEnemy();
+	}
+	
+	
+	
+	/*下面是详细带注释但是不精简版本
 	//需要检测当前鼠标下的actor
 	
-	//储存这一次检测的结果
-	FHitResult CursorResults;
+	
 	
 	// 检测鼠标光标正下方的碰撞对象，获取碰撞结果
 	// 参数1：ECC_Visibility - 碰撞通道类型为"可见性通道"（仅检测设置了"可见性"碰撞响应的对象，常用于UI交互、选中检测等场景）
@@ -58,7 +102,7 @@ void AAuraPlayerController::CursorTrace()
 	 *5.两个都不为空，但是last == this 代表玩家两帧指向的是同一个敌方actor，这个敌方actor在其他逻辑已经高亮了，这里不需要高亮
 	 *		do nothing
 	 */
-	
+	/*
 	if (LastActor == nullptr)
 	{
 		if (ThisActor != LastActor)
@@ -92,7 +136,7 @@ void AAuraPlayerController::CursorTrace()
 				//情况5
 			}
 		}
-	}
+	}*/
 	
 }
 
@@ -125,7 +169,7 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	}
 	else
 	{
-		APawn* ControlledPawn = GetPawn();
+		const APawn* ControlledPawn = GetPawn();
 		//鼠标左键短按到一个地点了，我要进行短按的逻辑
 		//首先判断时间是否符合短按的条件
 		if (FollowTime<=ShortPressThreshold&&ControlledPawn)
@@ -133,13 +177,15 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 			//需要创建一个导航路径点数组
 			if (UNavigationPath* Navpath =  UNavigationSystemV1::FindPathToLocationSynchronously(this,ControlledPawn->GetActorLocation(),CachedDestination))
 			{
-				//Navpath中就是一个导航路径，PathPoints就是这个导航路径中的路径点数组
+				//Navpath中就是一个导航路径，PathPoints就是这个导航路径中的路径点数组,玩家可能点击到一个永远无法到达的位置
+				//所以需要将导航数组上的最后一个点更新为目标点
 				Spline->ClearSplinePoints();
 				for (const FVector& PointLoc:Navpath->PathPoints)
 				{
 					Spline->AddSplinePoint(PointLoc,ESplineCoordinateSpace::World);
-					DrawDebugSphere(GetWorld(),PointLoc,25.f,12,FColor::Red,false,5.f);
+			
 				}
+				CachedDestination = Navpath->PathPoints[Navpath->PathPoints.Num()-1];
 				//短按左键且无锁定敌人时自动寻路
 				bAutoRuning = true;
 			}
@@ -172,12 +218,11 @@ void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 		//将按下左键的每一帧的时间机器加到左键按下时间记录的变量里面
 		FollowTime += GetWorld()->GetDeltaSeconds();
 		
-		FHitResult Hit;
-		//获取这一次点击的碰撞结果
-		if (GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		//从cursorResults中获取当前鼠标点击位置的碰撞结果
+		if (CursorResults.bBlockingHit)
 		{
 			//这个点击的位置就是目标位置
-			CachedDestination = Hit.ImpactPoint;
+			CachedDestination = CursorResults.ImpactPoint;
 		}
 		
 		//确保这是受控制的角色
@@ -199,6 +244,8 @@ UAuraAbilitySystemComponent* AAuraPlayerController::GetAsc()
 	}
 	return AuraAbilitySystemComponent;
 }
+
+
 
 void AAuraPlayerController::BeginPlay()
 {

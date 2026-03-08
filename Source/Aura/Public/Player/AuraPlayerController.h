@@ -44,6 +44,8 @@ private:
 	IEnemyInterface* ThisActor;
 	//Tick检测中这一帧率，鼠标下的actor类型
 	IEnemyInterface* LastActor;
+	//储存鼠标光标检测的结果
+	FHitResult CursorResults;
 	
 	//以下三个函数由增强输入组件调用，用于处理能力输入标签的按下、释放和持续按下事件，是按键按下时具体会执行的函数
 	void AbilityInputTagPressed(FGameplayTag InputTag);
@@ -76,4 +78,7 @@ private:
 	//储存从初始地到目的地计算出来的曲线，方便移动使用
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USplineComponent> Spline;
+	
+	//鼠标短按后自动移动的处理逻辑
+	void AutoRun();
 };

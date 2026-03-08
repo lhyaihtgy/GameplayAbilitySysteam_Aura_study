@@ -17,7 +17,7 @@ void UAuraAbilitySystemComponent::AbilityActorInfoSet()
 	// 绑定"GameplayEffect应用到自身"的委托：当有GameplayEffect（比如buff/debuff/技能效果）应用到当前ASC时，
 	// 自动触发EffectApplied回调函数
 	// AddUObject：基于UObject的委托绑定方式，保证GC安全（对象销毁时委托自动解绑）
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&UAuraAbilitySystemComponent::EffectApplied);
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this,&UAuraAbilitySystemComponent::ClientEffectApplied);
 	
 }
 
@@ -93,7 +93,7 @@ void UAuraAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& In
  * @param ActiveEffectHandle 已激活的GameplayEffect句柄（可通过该句柄查询/修改活跃的效果）
  * @note 该函数会在任何GameplayEffect（如加血、减伤、中毒buff）应用到当前ASC时被触发
  */
-void UAuraAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilitySystemComponent,
+void UAuraAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent,
 	const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
 {
 	FGameplayTagContainer TagContainer;
