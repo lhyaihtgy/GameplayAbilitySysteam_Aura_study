@@ -7,7 +7,7 @@
 #include "AuraGameplayAbility.generated.h"
 
 /**
- * 
+ * 这个类是这个项目所有技能都需要继承的一个C++类，是一个基础通用技能类
  */
 UCLASS()
 class AURA_API UAuraGameplayAbility : public UGameplayAbility

@@ -31,6 +31,13 @@ protected:
 	UPROPERTY(EditAnywhere, category = "combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
 	
+	//这个变量用来表述武器尖端的位置名称，在蓝图中为这个变量赋值为武器尖端的插槽
+	UPROPERTY(EditAnywhere, category = "combat")
+	FName WeaponTipSocketName;
+	
+	//这个函数通过上面的这个变量得到武器尖端所在位置的坐标
+	virtual FVector GetCombatSocketLocation() override;
+	
 	//敌人的能力系统组件
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySysteamComponent;

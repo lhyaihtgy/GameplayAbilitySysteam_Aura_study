@@ -9,8 +9,11 @@
 
 AAuraProjectile::AAuraProjectile()
 {
- 	
+ 	//让这个类的实例每帧禁止调用tick函数，我也没有实现tick函数
 	PrimaryActorTick.bCanEverTick = false;
+	//下面这行代码的作用是让这个类的实例在网络游戏中进行复制，这样这个类的实例就可以在服务器和客户端之间进行同步了
+	bReplicates = true;
+	
 	Sphere = CreateDefaultSubobject<USphereComponent>("sphere");
 	SetRootComponent(Sphere);
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");

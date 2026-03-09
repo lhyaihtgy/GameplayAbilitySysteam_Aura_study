@@ -24,4 +24,6 @@ class AURA_API ICombatInterface
 public:
 	//这个函数不需要强制实现，当某一个character不需要实现的时候可以只使用默认的，默认返回0
 	virtual int32 GetPlayerLevel();
+	
+	virtual FVector GetCombatSocketLocation();
 };
