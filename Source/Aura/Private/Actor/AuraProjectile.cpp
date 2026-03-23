@@ -5,6 +5,9 @@
 
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Components/AudioComponent.h"
 
 
 AAuraProjectile::AAuraProjectile()
@@ -26,23 +29,59 @@ AAuraProjectile::AAuraProjectile()
 void AAuraProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+	//设定这个飞行物的生命周期
+	SetLifeSpan(Lifespan);
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AAuraProjectile::OnSphereOverlap);
 	//下面这行代码的作用是设置碰撞体的碰撞响应为只进行查询，这样就不会对其他物体造成物理影响了，只会触发重叠事件
 	Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	//下面这行代码的作用是设置碰撞体的碰撞响应为忽略所有通道，这样就不会对其他物体造成物理影响了，只会触发重叠事件
+	//显式开启重叠事件，确保OnComponentBeginOverlap能够触发
+	Sphere->SetGenerateOverlapEvents(true);
+	//先忽略全部，再只对需要检测的通道开启重叠
 	Sphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	//下面这行代码的作用是设置碰撞体的碰撞响应为忽略世界动态通道，这样就不会对其他物体造成物理影响了，只会触发重叠事件
-	Sphere->SetCollisionResponseToChannel(ECC_WorldDynamic,ECR_Ignore);
-	//下面这行代码的作用是设置碰撞体的碰撞响应为忽略世界静态通道，这样就不会对其他物体造成物理影响了，只会触发重叠事件
-	Sphere->SetCollisionResponseToChannel(ECC_WorldStatic,ECR_Ignore);
-	//下面这行代码的作用是设置碰撞体的碰撞响应为忽略角色通道，这样就不会对其他物体造成物理影响了，只会触发重叠事件
-	Sphere->SetCollisionResponseToChannel(ECC_Pawn,ECR_Ignore);
+	//与动态物体重叠（如可移动Actor）
+	Sphere->SetCollisionResponseToChannel(ECC_WorldDynamic,ECR_Overlap);
+	//与静态场景重叠（如墙体、地面）
+	Sphere->SetCollisionResponseToChannel(ECC_WorldStatic,ECR_Overlap);
+	//与角色胶囊体重叠（玩家/敌人）
+	Sphere->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
+	
+	//创建飞行物飞行过程中的循环音效，这个音效组件不属于任何类（我写的类中），我们可以保存下来，确保什么时候关闭循环音效
+	LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound,GetRootComponent());
+}
+
+void AAuraProjectile::Destroyed()
+{
+	//如果客户端检测到这个飞行物没有被处理过，并且到这代表服务端已经准备销毁这个飞行物了，此时就让飞行物准备释放音效和粒子特效
+	if (!bHits&&!HasAuthority())
+	{
+		//在飞行物撞击到物体的开始释放音效
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound,GetActorLocation(),FRotator::ZeroRotator);
+		//释放撞击的粒子特效
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this,ImpactEffect,GetActorLocation());
+		LoopingSoundComponent->Stop();
+	}
+	Super::Destroyed();
 }
 
 void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                      UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	//在飞行物撞击到物体的开始释放音效
+	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound,GetActorLocation(),FRotator::ZeroRotator);
+	//释放撞击的粒子特效
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this,ImpactEffect,GetActorLocation());
+	LoopingSoundComponent->Stop();
 	
+	//服务端销毁这个飞行物
+	if (HasAuthority())
+	{
+		Destroy();
+	}
+	else
+	{
+		//客户端设定这个飞行物体的特效已经处理过了
+		bHits = true;
+	}
 }
 
 

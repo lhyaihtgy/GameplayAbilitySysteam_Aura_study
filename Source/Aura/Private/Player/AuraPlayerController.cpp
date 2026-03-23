@@ -161,13 +161,11 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 			GetAsc()->AbilityInputTagReleased(InputTag);
 		return;
 	}
-	//按下鼠标左键，并且鼠标左键对应的是敌人需要激活鼠标左键对应的技能
-	if (bTargeting)
-	{
-		if (GetAsc())
-			GetAsc()->AbilityInputTagHeld(InputTag);
-	}
-	else
+	//告诉能力系统玩家已经没有按下按键了
+	if (GetAsc()) GetAsc()->AbilityInputTagReleased(InputTag);
+	
+	//只有玩家不处于点击敌人状态或者按下shift释放技能状态时，才是短暂点击地面进行自动移动
+	if (!bTargeting&&!bShiftKeyDown)
 	{
 		const APawn* ControlledPawn = GetPawn();
 		//鼠标左键短按到一个地点了，我要进行短按的逻辑
@@ -206,7 +204,8 @@ void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 		return;
 	}
 	//长按鼠标左键，并且鼠标左键对应的是敌人需要激活鼠标左键对应的技能
-	if (bTargeting)
+	//或者我按下了shift按键那么也需要激活技能
+	if (bTargeting||bShiftKeyDown)
 	{
 		if (GetAsc())
 			GetAsc()->AbilityInputTagHeld(InputTag);
@@ -283,9 +282,13 @@ void AAuraPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	//将默认输入组件替换为Aura自定义的增强输入组件
 	UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
-	
-	//获得输入数据之后将由move函数来处理
+	//获得移动输入数据之后将由move函数来处理
 	AuraInputComponent->BindAction(MoveAction,ETriggerEvent::Triggered,this,&AAuraPlayerController::Move);
+	
+	//通过下面两个函数和bool值能够知道当前shift是否被按下
+	AuraInputComponent->BindAction(ShiftAction,ETriggerEvent::Started,this,&AAuraPlayerController::ShiftPressed);
+	AuraInputComponent->BindAction(ShiftAction,ETriggerEvent::Started,this,&AAuraPlayerController::ShiftReleased);
+	
 	//绑定能力输入标签的按下、释放和持续按下事件
 	AuraInputComponent->BindAbilityAction(InputConfig,this,&ThisClass::AbilityInputTagPressed,&ThisClass::AbilityInputTagReleased,&ThisClass::AbilityInputTagHeld); 
 }

@@ -35,7 +35,15 @@ private:
 	UPROPERTY(EditAnywhere,Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;//用来保存移动输入数据的变量
 	
-	void Move(const FInputActionValue& InputActionValue);//处理输入数据的函数
+	void Move(const FInputActionValue& InputActionValue);//处理移动输入数据的函数
+	
+	UPROPERTY(EditAnywhere,Category = "Input")
+	TObjectPtr<UInputAction> ShiftAction;
+	
+	//处理shift按键按下和释放的回调函数
+	void ShiftPressed() {bShiftKeyDown = true;};
+	void ShiftReleased() { bShiftKeyDown = false; };
+	bool bShiftKeyDown = false;
 	
 	//这个函数由玩家操作器每帧调用，检测鼠标下的actor是否重写了高亮接口，并且对高亮接口进行调用
 	void CursorTrace();
@@ -46,6 +54,7 @@ private:
 	IEnemyInterface* LastActor;
 	//储存鼠标光标检测的结果
 	FHitResult CursorResults;
+	
 	
 	//以下三个函数由增强输入组件调用，用于处理能力输入标签的按下、释放和持续按下事件，是按键按下时具体会执行的函数
 	void AbilityInputTagPressed(FGameplayTag InputTag);
