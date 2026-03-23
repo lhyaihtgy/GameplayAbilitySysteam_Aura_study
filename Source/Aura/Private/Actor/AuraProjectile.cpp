@@ -3,10 +3,14 @@
 
 #include "Actor/AuraProjectile.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Aura/Aura.h"
 #include "Components/AudioComponent.h"
 
 
@@ -19,6 +23,8 @@ AAuraProjectile::AAuraProjectile()
 	
 	Sphere = CreateDefaultSubobject<USphereComponent>("sphere");
 	SetRootComponent(Sphere);
+	//设定碰撞类型
+	Sphere->SetCollisionObjectType(ECC_Projectile);
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");
 	ProjectileMovementComponent->InitialSpeed = 550.0f;
 	ProjectileMovementComponent->InitialSpeed = 550.0f;
@@ -75,6 +81,11 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 	//服务端销毁这个飞行物
 	if (HasAuthority())
 	{
+		//如果飞行物击中的这个物体也有能力系统组件就将Damage所指代的这个游戏效果赋予给这个actor的能力系统组件，让其修改自己的属性
+		if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
+		{
+			TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
+		}
 		Destroy();
 	}
 	else

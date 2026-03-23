@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayEffectTypes.h"
 #include "AuraProjectile.generated.h"
 
+struct FGameplayEffectSpecHandle;
 class USphereComponent;
 class UProjectileMovementComponent;
 class UNiagaraSystem;
@@ -25,6 +27,8 @@ public:
 	//下面这个成员变量是所有弹射actor的移动组件，所有弹射actor都要使用这个移动组件来进行移动，这个移动组件是解决弹射物物体移动的组件
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
+	UPROPERTY(BlueprintReadWrite,meta=(ExposeOnSpawn=true))
+	FGameplayEffectSpecHandle DamageEffectSpecHandle;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
