@@ -6,8 +6,10 @@
 #include "Character/AuraCharacterBase.h"
 #include "Interaction/CombatInterface.h"
 #include "Interaction/EnemyInterface.h"
+#include "UI/WidgetController/OverlayWidgetController.h"
 #include "AuraEnemyCharacter.generated.h"
 
+class UWidgetComponent;
 /**
  * 
  */
@@ -24,6 +26,15 @@ public:
 	/** Combat Interface**/
 	int32 GetPlayerLevel() override;
 	/**  end Combat Interface **/
+	
+	/**
+	 * 下面是两个委托，在蓝图中进行定义，会在生命值发生变化的时候发出广播
+	 */
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedSignature OnHealthChanged;
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedSignature OnMaxHealthChanged;
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitAbilitySystemInfo() override;
@@ -34,6 +45,10 @@ protected:
 	//所以这个属性不需要复制到客户端所以敌人的等级不需要进行复制
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category = "Character Class Defaults")
 	int32 Level;
+	
+	//敌人的血条
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent> HealthBar;
 };
 
 

@@ -2,10 +2,13 @@
 
 
 #include "Character/AuraEnemyCharacter.h"
+#include "Components/WidgetComponent.h"
 
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "Aura/Aura.h"
+#include "UI/Widget/AuraUserWidget.h"
+
 AAuraEnemyCharacter::AAuraEnemyCharacter()
 {
 	// 设置角色网格体（Mesh）对“可见性碰撞通道（ECC_Visibility）”的碰撞响应为“阻挡（ECR_Block）”
@@ -34,7 +37,9 @@ AAuraEnemyCharacter::AAuraEnemyCharacter()
 	// 核心作用：集中存储角色的可修改属性（如血量、蓝量、攻击力、防御力），由能力系统组件统一管理，属性变化会通过GAS自动同步
 	AttributeSet = CreateDefaultSubobject<UAuraAttributeSet>("AttributeSet");
 
-	
+	//生成血条控制组件
+	HealthBar = CreateDefaultSubobject<UWidgetComponent>("HealthBar");
+	HealthBar->SetupAttachment(GetRootComponent());
 }
 void AAuraEnemyCharacter::HightLightEnemy()
 {
@@ -79,6 +84,49 @@ void AAuraEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();	
 	InitAbilitySystemInfo();
+	
+	//HealthBar->GetUserWidgetObject()获取这个组件的使用者，然后将这个组件的控制者设置为敌人自身，这样只有敌人自己才能操作自己的血条
+	//这里也是设置血条的进度控制器
+	UAuraUserWidget* AuraUserWidget = Cast<UAuraUserWidget>(HealthBar->GetUserWidgetObject());
+	if (AuraUserWidget)
+	{
+		AuraUserWidget->SetWidgetController(this);
+	}
+	
+	
+	//到这里的时候能力系统组件就已经初始化完成了，需要给能力系统组件进行委托绑定
+	UAuraAttributeSet* AuraAS = Cast<UAuraAttributeSet>(AttributeSet);
+	if (AuraAS)
+	{
+		//监听 Health 属性的变化。
+		// 当 Health 数值发生变化时，会触发回调，并将新的生命值通过 OnHealthChanged 委托广播出去
+		// 绑定 Health 属性变化委托。
+		// 当 ASC 中的 Health 属性值改变时，回调会收到变化数据，并将新的生命值广播给 OnHealthChanged。
+
+		AbilitySysteamComponent->GetGameplayAttributeValueChangeDelegate(AuraAS->GetHealthAttribute()).AddLambda(
+		[this](const FOnAttributeChangeData& Data)
+		{
+			OnHealthChanged.Broadcast(Data.NewValue);
+		}
+		);
+
+		//对最大生命z
+		AbilitySysteamComponent->GetGameplayAttributeValueChangeDelegate(AuraAS->GetMaxHealthAttribute()).AddLambda(
+		[this](const FOnAttributeChangeData& Data)
+		{
+			OnMaxHealthChanged.Broadcast(Data.NewValue);
+		}
+		);
+
+		//延迟广播初始值，确保蓝图UI完全初始化（特别是Ghost血条）
+		//使用Lambda捕获初始值，在下一帧广播，避免UI组件未就绪导致初始值丢失
+		FTimerHandle InitialBroadcastTimer;
+		GetWorldTimerManager().SetTimerForNextTick([this, AuraAS]()
+		{
+			OnHealthChanged.Broadcast(AuraAS->GetHealth());
+			OnMaxHealthChanged.Broadcast(AuraAS->GetMaxHealth());
+		});
+	}
 }
 
 void AAuraEnemyCharacter::InitAbilitySystemInfo()

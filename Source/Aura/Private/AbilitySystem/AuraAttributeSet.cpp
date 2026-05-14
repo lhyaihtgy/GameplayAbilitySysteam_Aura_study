@@ -231,15 +231,6 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
     if (Data.EvaluatedData.Attribute == GetHealthAttribute())
     {
         SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-        GEngine->AddOnScreenDebugMessage(
-    -1,                      // Key值，-1 表示自动分配唯一Key
-    5.0f,                    // 显示时长（秒） 
-    FColor::White,           // 文本颜色
-    FString::Printf(TEXT("Change Health on : %s, health: %f"), 
-        *Props.TargetAvatarActor->GetName(), 
-        GetHealth()
-    )
-);
     }
     if (Data.EvaluatedData.Attribute == GetManaAttribute())
     {
